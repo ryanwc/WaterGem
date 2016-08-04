@@ -1,0 +1,25 @@
+application: watergem
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /stylesheets
+  static_dir: stylesheets
+
+- url: /js
+  static_dir: js
+
+- url: /images
+  static_dir: images
+
+- url: /bower_components
+  static_dir: bower_components
+
+- url: (.*)
+  script: app.app
+
+libraries:
+- name: jinja2
+  version: latest

@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+
+		{% block head %}
+
+		<link type="text/css" rel="stylesheet" href="/stylesheets/home.css">
+		<title>
+			Base Template
+		</title>
+
+		{% endblock %}
+	</head>
+
+	<body>
+
+		<!-- start block for main page content -->
+		{% block pageContent %}
+
+		{% endblock %}
+		<!-- end block for main page content -->
+
+		<!-- start footer -->
+		{% block footer %}
+
+		<div class="menu">
+
+			<h4 class="menuheader">Menu</h4>
+
+			<p>
+				<a class="menulink" href="{{url_for('index')}}">Home</a> | 
+				{% if username %}
+					<a class="menulink" href="{{url_for('logout')}}">Sign out</a>
+				{% else %}
+					<a class="menulink" href="{{url_for('register')}}">Register a new account</a> | <a class="menulink" href="{{url_for('signin')}}">Sign in to an existing account</a>
+				{% endif %} | <a class="menulink" href="{{url_for('about')}}">About WaterGem</a>
+			</p>
+			<p>
+				Created by <a href="https://github.com/ryanwc">Ryan William Connor</a> in August 2016.
+				<br>
+				Copyright © 2016 Ryan William Connor. All rights reserved.
+			</p>
+
+		</div>
+
+		{% endblock %}
+		<!-- end footer -->
+
+		{% block scripts %}
+
+		{% endblock %}
+
+	</body>
+</html>
