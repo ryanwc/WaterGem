@@ -573,14 +573,12 @@ app = webapp2.WSGIApplication(
 		 webapp2.Route("/signin", handler=Signin, name="signin"),
 		 webapp2.Route("/logout", handler=Logout, name="logout"),
 		 webapp2.Route("/gem/view/<id>", 
-		 	handler=ViewDream, name="viewgem"),
+		 	handler=ViewGem, name="viewgem"),
 		 webapp2.Route("/gem/like/<id>", 
-		 	handler=LikeDream, name="usegem"),
+		 	handler=UseGem, name="usegem"),
 		 webapp2.Route("/gem/edit/<id>", 
-		 	handler=EditDream, name="editgem"),
-		 webapp2.Route("/gem/delete/<id>", 
-		 	handler=DeleteDream, name="deletegem"),
-		 webapp2.Route("/gem/new", handler=NewDream, name="newgem")],
+		 	handler=EditGem, name="editgem"),
+		 webapp2.Route("/gem/new", handler=NewGem, name="newgem")],
 		debug=True)
 
 
