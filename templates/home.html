@@ -3,28 +3,44 @@
 {% block head %}
 
 	<title>WaterGem - Find the Closest Cheap and Clean Drinking Water</title>
+	<link rel="stylesheet" href="stylesheets/home.css">
 
 {% endblock %}
 
 
 {% block pageContent %}
 
-Water, water everywhere, so let's figure out how to drink it.
+	<div class="headerdiv">
+		<h1 id="headerlogo">WaterGem</h1>
+		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
+	</div>
 
-{% endblock %}
+	<!-- menu bar with filtering/selection -->
+	<div class="" id="menubar">
+		<div class="" id="citydiv">
+		</div>
+		<div class="" id="neighborhooddiv">
+		</div>
+		<div class="" id="gemdiv">
+		</div>
+	</div>
+	<!-- end filtering/seletion -->
 
-
-{% block footer %}
-
-
+	<!-- google map -->
+	<div class="" id="googlemapdiv">
+    	<div id="googlemap">
+    	</div>
+	</div>
+	<!-- end google map -->
 
 {% endblock %}
 
 
 {% block scripts %}
 
-	<script src="bower_components/jquery/jquery.js"></script>
-	<script src="bower_components/jquery/knockout.js"></script>		
+	<script src="bower_components/jquery.js"></script>
+	<script src="bower_components/knockout.js"></script>		
 	<script src="js/app.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6Og92aUD75aW9vxng8igWUKrjCJXT-U&callback=initMap" async defer></script>
 
 {% endblock %}
