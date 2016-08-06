@@ -7,7 +7,7 @@ import os, webapp2, jinja2, re, hashlib, hmac, random, datetime, json
 from datetime import date
 import string, cPickle as pickle
 from webapp2 import redirect_to
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 # third party lib
 import bleach
@@ -42,31 +42,27 @@ class Handler(webapp2.RequestHandler):
 # question: after udacity should i ditch datastore in favor of free RDB?
 
 class User(db.Model):
-	''' Datastore model for an app "user"
+	''' Datastore model for one app "user"
 	'''
-	username = db.StringProperty(required = True)
-	lc_username = db.StringProperty(required = True)
-
-class Country(db.Model):
-	''' Datastore model for a Country
-	'''
-	# need this or just property of gem?
-
-class City(db.Model):
-	''' Datastore model for a city
-	'''
-	# need this or just property of gem?
-
-class Neighborhood(db.Model):
-	''' Datastore model for a neighborhood
-	'''
-	# need this or just property of gem?
+	username = ndb.StringProperty(required = True)
+	lc_username = ndb.StringProperty(required = True)
+	email = ndb.Email(required = True)
+	password = ndb.StringProperty()
 
 # a specific user's unique dreamsigns
 class Gem(db.Model):
 	''' Datastore model for one gem
 	'''
-	#gemfinders = ref prop "gems"
+	location = ndb.GeoPoint(required = True)
+	country = ndb.StringProperty(required = True)
+	city = ndb.StringProperty(required = True)
+	neighborhood = ndb.StringProperty(required = True)
+	prices = ndb.StringProperty()
+	picture = ndb.Blob()
+	notes = ndb.StringProperty()
+	gemfinder = ndb.ReferenceProperty("User", "foundgems")
+	gemfinders = ndb.ReferenceProperty("User", "gemfinders")
+
 
 ### some globals
 

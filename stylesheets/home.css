@@ -1,7 +1,7 @@
 /* globals */
 
 body {
-
+	background-color: #3377ff;
 }
 
 a {
@@ -16,9 +16,24 @@ a {
 
 }
 
+#menubar {
+	display: flex;
+}
+
+#navigationlinksdiv {
+	margin-top: 10px;
+	background-color: #f2f2f2;
+	padding: 5px;
+	border: 2px solid black;
+	border-radius: 8px;
+}
+
+#navigationlinksheader {
+	margin-top: 0px;
+}
+
 #googlemapdiv {
-	height: 500px;
-	width: 500px;
+	width: 100%;
 	border; 2px solid black;
 }
 

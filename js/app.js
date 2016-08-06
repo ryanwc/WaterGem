@@ -5,6 +5,20 @@
 *
 */
 
+// some css manipulation that cannot be done in the .css file
+window.onresize = function(event) {
+    
+    setMapDivHeight();
+};
+
+// helper functions
+function setMapDivHeight() {
+
+    var width = $('#googlemapdiv').width();
+	$('#googlemapdiv').css({'height':width+'px'});
+}
+
+// define the Models
 var User = function (data) {
 
 	var self = this;
@@ -43,6 +57,7 @@ var Location = function (data) {
 	*/
 }
 
+// define the ViewModel
 var ViewModel = function () {
 
 	var self = this;
