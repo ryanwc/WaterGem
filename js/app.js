@@ -34,14 +34,27 @@ var Gem = function (data) {
 
 	var self = this;
 
-	self.property = ko.observable(0);
-	self.name = ko.observable(data.name);
-	self.imgSrc = ko.observable(data.imgSrc);
-	self.price = ko.observable(data.price);
+	self.location = ko.observable(data.location);
+	self.country = ko.observable(data.country);
+	self.city = ko.observable(data.city);
+	self.neighborhood = ko.observable(data.neighborhood);
+	self.neighborhoodid = ko.observable(data.neighborhoodid);
+	self.picture = ko.observable(data.picture);
+	self.prices = ko.observableArray(data.price);
+	self.uv = ko.observable(data.uv);
+	self.ozone = ko.observable(data.ozone);
+	self.confirmed = ko.observable(data.confirmed);
+	self.company = ko.observable(data.company);
+	self.notes = ko.observable(data.notes);
+	self.gemfinder = ko.observable(data.gemfinder);
+	self.gemusers = observableArray(data.gemusers);
 
 	/*
 
 	ajax calls to server to get gems
+
+	gemfinder = ndb.KeyProperty(kind=User)
+	gemusers = ndb.PickleProperty()
 
 	*/
 }

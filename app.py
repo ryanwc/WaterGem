@@ -37,38 +37,537 @@ class Handler(webapp2.RequestHandler):
 		'''
 		self.write(self.render_str(template, **kw))
 
-## need to refactor this for modules
-# define entities
-# question: after udacity should i ditch datastore in favor of free RDB?
+# define datastore models
 
-class User(db.Model):
+class User(ndb.Model):
 	''' Datastore model for one app "user"
 	'''
 	username = ndb.StringProperty(required = True)
 	lc_username = ndb.StringProperty(required = True)
-	email = ndb.Email(required = True)
-	password = ndb.StringProperty()
+	email = ndb.StringProperty(required = True)
+	password = ndb.StringProperty(required = True)
+	foundgems = ndb.KeyProperty(repeated = True)
+	usedgems = ndb.KeyProperty(repeated = True)
 
-# a specific user's unique dreamsigns
-class Gem(db.Model):
+class Country(ndb.Model):
+	''' Datastore model for one country
+	'''
+	name = ndb.StringProperty(required = True)
+	cities = ndb.KeyProperty(repeated = True)
+
+class City(ndb.Model):
+	''' Datastore model for one city
+	'''
+	name = ndb.StringProperty(required = True)
+	country = ndb.KeyProperty(required = True)
+	neighborhoods = ndb.KeyProperty(repeated = True)
+
+class Neighborhood(ndb.Model):
+	''' Datastore model for one neighborhood
+	'''
+	name = ndb.StringProperty(required = True)
+	city = ndb.KeyProperty(required = True)
+	gems = ndb.KeyProperty(repeated = True)
+
+
+class Gem(ndb.Model):
 	''' Datastore model for one gem
 	'''
-	location = ndb.GeoPoint(required = True)
-	country = ndb.StringProperty(required = True)
-	city = ndb.StringProperty(required = True)
-	neighborhood = ndb.StringProperty(required = True)
-	prices = ndb.StringProperty()
-	picture = ndb.Blob()
+	location = ndb.GeoPtProperty(required = True)
+	neighborhood = ndb.KeyProperty(required = True)
+	prices = ndb.FloatProperty(repeated = True)
+	picture = ndb.BlobProperty()
+	uv = ndb.BooleanProperty(required = True)
+	ozone = ndb.BooleanProperty(required = True)
+	confirmed = ndb.BooleanProperty(required = True)
+	company = ndb.StringProperty()
 	notes = ndb.StringProperty()
-	gemfinder = ndb.ReferenceProperty("User", "foundgems")
-	gemfinders = ndb.ReferenceProperty("User", "gemfinders")
+	gemfinder = ndb.KeyProperty()
+	gemusers = ndb.KeyProperty(repeated = True)
 
 
-### some globals
+### initial pop data
+LOCALES = {
+	"Thailand":
+		{"Bangkok":
+			{"Phra Nakhon":[],
+			 "Dusit":[],
+			 "Nong Chok":[],
+			 "Bang Rak":[
+			 	{
+					"location":"13.730723, 100.51499", 
+					"picname":"",
+					"prices":[],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Side alley off of Charoen Krung Road with Old Town Hostel at intersection."
+				}
+			 ],
+			 "Bang Khen":[],
+			 "Bang Kapi":[],
+			 "Pathum Wan":[
+			 	{
+					"location":"13.736146, 100.52327", 
+					"picname":"Bangkok10",
+					"prices":[1],
+					"company":"[Good Drinks]",
+					"uv":False,
+					"ozone":True,
+					"confirmed":True,
+					"notes":"If picture is accurate, please delete this note."
+			 	}
+			 ],
+			 "Pom Prap Sattru Phai":[],
+			 "Phra Khanong":[],
+			 "Min Buri":[],
+			 "Lat Krabang":[],
+			 "Yan Nawa":[],
+			 "Samphanthawong":[],
+			 "Phaya Thai":[
+			 	{
+					"location":"13.77911, 100.53787", 
+					"picname":"Bangkok7",
+					"prices":[1],
+					"company":"Tomorn Drinking",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+			 	},
+				{
+					"location":"13.795133, 100.5498", 
+					"picname":"Bangkok9",
+					"prices":[.75],
+					"company":"[Savelife]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"If picture is accurate, please delete this note."
+				}
+			 ],
+			 "Thon Buri":[],
+			 "Bangkok Yai":[],
+			 "Huai Khwang":[],
+			 "Khlong San":[],
+			 "Taling Chan":[],
+			 "Bangkok Noi":[],
+			 "Bang Khun Thian":[],
+			 "Phasi Charoen":[],
+			 "Nong Khaem":[],
+			 "Rat Burana":[],
+			 "Bang Phlat":[],
+			 "Din Daeng":[],
+			 "Bueng Kum":[],
+			 "Sathon":[
+			 	{
+					"location":"13.718142, 100.52685",
+					"picname":"Bangkok17",
+					"prices":[],
+					"company":"",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"West side of the street"
+				}
+			 ],
+			 "Bang Sue":[],
+			 "Chatuchak":[],
+			 "Bang Kho Laem":[],
+			 "Prawet":[],
+			 "Khlong Toei":[],
+			 "Suan Luang":[],
+			 "Chom Thong":[],
+			 "Don Mueang":[],
+			 "Ratchathewi":[
+			 	{
+			 		"location":"13.753356, 100.54607",
+			 		"picname":"Bangkok1",
+			 		"prices":[1,2,5,10],
+			 		"company":"[Clearly Pure]",
+			 		"uv":False,
+			 		"ozone":False,
+			 		"confirmed":True,
+			 		"notes":""
+			 	},
+			 	{		
+			 		"location":"13.7554083, 100.5420694", 
+					"picname":"Bangkok2",
+					"prices":[1,5,10],
+					"company":"Water Net",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Side street called Thanon C.S.T. off of Ratchaprarop Road next to Ratchaprarop Kitchen."
+				},
+				{
+					"location":"13.757015, 100.54206", 
+					"picname":"Bangkok3",
+					"prices":[],
+					"company":"JR water",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Side alley off of Ratchaprarop Road."
+				},
+				{
+					"location":"13.757594, 100.54218", 
+					"picname":"Bangkok4",
+					"prices":[1],
+					"company":"MK Express",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Side alley off of Ratchaprarop Road."
+				},
+				{
+					"location":"13.758816, 100.54254", 
+					"picname":"Bangkok5",
+					"prices":[1,5,10],
+					"company":"Win Sent",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Side street at intersection of Ratchaprarop Road and Rang Nam Road."
+				},
+				{
+					"location":"13.762113, 100.54044", 
+					"picname":"Bangkok6",
+					"prices":[1,2,5,10],
+					"company":"[TP Group BKK]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Left side of driveway of Sabaai Place condos/apartments."
+				},
+				{
+					"location":"13.760931, 100.54316", 
+					"picname":"Bangkok8",
+					"prices":[],
+					"company":"[unknown]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"North/south side street reachable from Ratchaprarop Road."
+				},
+				{
+					"location":"13.760336, 100.54323", 
+					"picname":"",
+					"prices":[],
+					"company":"[unknown]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"North/south side street reachable from Ratchaprarop Road."
+				},
+				{
+					"location":"13.759964, 100.54326", 
+					"picname":"",
+					"prices":[.75],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"North/south side street reachable from Ratchaprarop Road."
+				},
+				{
+					"location":"13.759585, 100.54315", 
+					"picname":"",
+					"prices":[],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"North/south side street reachable from Ratchaprarop Road."
+				},
+				{
+					"location":"13.75923, 100.54318", 
+					"picname":"",
+					"prices":[],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"North/south side street reachable from Ratchaprarop Road."
+				},
+				{
+					"location":"13.753386, 100.544264", 
+					"picname":"Bangkok13",
+					"prices":[1],
+					"company":"[YAO WATER]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"Next to Home Hug Hostel; across from 7/11."
+				},
+				{
+					"location":"13.753019, 100.54371", 
+					"picname":"Bangkok14",
+					"prices":[1],
+					"company":"",
+					"uv":False,
+					"ozone":True,
+					"confirmed":True,
+					"notes":"This picture might need to be switched with the picture for the gem a few steps to the south."
+				},
+				{
+					"location":"13.752996, 100.5457", 
+					"picname":"Bangkok15",
+					"prices":[1],
+					"company":"",
+					"uv":False,
+					"ozone":True,
+					"confirmed":True,
+					"notes":"Hidden just inside the wall separating a parking lot from the street."
+				},
+				{
+					"location":"13.752804, 100.54365", 
+					"picname":"Bangkok16",
+					"prices":[1],
+					"company":"[Rainbow]",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"This picture might need to be switched with the picture for the gem a few steps to the north."
+				}
+			 ],
+			 "Lat Phrao":[],
+			 "Watthana":[
+			 	{
+					"location":"13.743452, 100.58091", 
+					"picname":"Bangkok11",
+					"prices":[1],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"On north/south street connecting to Baandon Mosque ferry canal stop."
+				},
+				{
+					"location":"13.743452, 100.58091", 
+					"picname":"Bangkok12",
+					"prices":[1],
+					"company":"[Green PLUS]",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":"On north/south street connecting to Baandon Mosque ferry canal stop."
+				}
+			 ],
+			 "Bang Khae":[],
+			 "Lak Si":[],
+			 "Sai Mai":[],
+			 "Khan Na Yao":[],
+			 "Saphan Sung":[],
+			 "Wang Thonglang":[],
+			 "Khlong Sam Wa":[],
+			 "Bang Na":[],
+			 "Thawi Watthana":[],
+			 "Thung Khru":[],
+			 "Bang Bon":[]
+			},
+		 "Chiang Mai":
+			{"Si Phum":[
+				{ 
+					"location":"18.79691, 98.983932", 
+					"picname":"ChiangMai3",
+					"prices":[1,2,5,10],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"location":"18.796073, 98.985908", 
+					"picname":"ChiangMai4",
+					"prices":[],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"country":"Thailand", 
+					"city":"Chiang Mai", 
+					"neighborhood":"Si Phum", 
+					"location":"18.794154, 98.984288", 
+					"picname":"ChiangMai9",
+					"prices":[.50],
+					"company":"[Water Fresh]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"country":"Thailand", 
+					"city":"Chiang Mai", 
+					"neighborhood":"Si Phum", 
+					"location":"18.794114, 98.984294", 
+					"picname":"ChiangMai10",
+					"prices":[1,5,10],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"country":"Thailand", 
+					"city":"Chiang Mai", 
+					"neighborhood":"Si Phum", 
+					"location":"18.793985, 98.983807", 
+					"picname":"ChiangMai11",
+					"prices":[.50],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"country":"Thailand", 
+					"city":"Chiang Mai", 
+					"neighborhood":"Si Phum", 
+					"location":"18.79404, 98.983568", 
+					"picname":"ChiangMai12",
+					"prices":[.50],
+					"company":"[Good Drinks]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"country":"Thailand", 
+					"city":"Chiang Mai", 
+					"neighborhood":"Si Phum", 
+					"location":"18.792279, 98.982138", 
+					"picname":"ChiangMai13",
+					"prices":[.50, 1, 2, 5, 10],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Phra Sing":[
+			 	{
+					"location":"18.784742, 98.988516", 
+					"picname":"ChiangMai8",
+					"prices":[1],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Haiya":[
+			 	{
+					"location":"18.778776, 98.984087", 
+					"picname":"ChiangMai7",
+					"prices":[1,2,5,10],
+					"company":"[System Technology]",
+					"uv":True,
+					"ozone":True,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Chang Moi":[
+			 	{
+					"location":"18.786477, 99.001771", 
+					"picname":"ChiangMai14",
+					"prices":[1,2,5,10],
+					"company":"[View]",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Chang Khlan":[],
+			 "Wat Ket":[],
+			 "Chang Phueak":[
+			 	{ 
+					"location":"18.798959, 98.975058", 
+					"picname":"ChiangMai15",
+					"prices":[1],
+					"company":"[fnr-nanowater]",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Suthep":[
+			 	{
+					"location":"18.801171, 98.963313", 
+					"picname":"ChiangMai1",
+					"prices":[1],
+					"company":"",
+					"uv":False,
+					"ozone":True,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"location":"18.800649, 98.961743", 
+					"picname":"ChiangMai2",
+					"prices":[.50],
+					"company":"",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{ 
+					"location":"18.802812, 98.963543", 
+					"picname":"ChiangMai5",
+					"prices":[.50],
+					"company":"",
+					"uv":True,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				},
+				{
+					"location":"18.802584, 98.963213", 
+					"picname":"ChiangMai6",
+					"prices":[.50],
+					"company":"",
+					"uv":False,
+					"ozone":False,
+					"confirmed":True,
+					"notes":""
+				}
+			 ],
+			 "Mae Hia":[],
+			 "Pa Daet":[],
+			 "Nong Hoi":[],
+			 "Tha Sala":[],
+			 "Nong Pa Khrang":[],
+			 "Fa Ham":[],
+			 "Pa Tan":[],
+			 "San Phi Suea":[]
+			}
+		}
+	}
 
-COUNTRIES = []
-CITIES = []
-NEIGHBORHOODS = []
+# wiki endings:
+# bangkok:
+# Chom_Thong_District,_Bangkok
+# all others end in _District
+# chiang mai:
+# Chang_Phueak,_Chiang_Mai
+# Pa_Tan_Subdistrict,_Chiang_Mai
+# Tha_Sala,_Chiang_Mai
+# Pa_Daet,_Chiang_Mai
 
 ### helper functions
 
@@ -191,6 +690,49 @@ class Home(Handler):
 		#
 		# only do after datastore clear to re-populate defaults
 		#
+		imgPath = os.getcwd() + "/images/"
+
+		for countryName in LOCALES:
+
+			countryObj = Country(name=countryName, cities=[])
+			countryObj.put()
+
+			for cityName in LOCALES[countryName]:
+
+				cityObj = City(name=cityName, country=countryObj.key,
+					neighborhoods=[])
+				cityObj.put()
+
+				for neighborhoodName in LOCALES[countryName][cityName]:
+
+					neighborhoodObj = Neighborhood(name=neighborhoodName,
+						city=cityObj.key, gems=[])
+					neighborhoodObj.put()
+
+					for gem in LOCALES[countryName][cityName][neighborhoodName]:
+
+						picture = None
+						if gem["picname"]:
+							thisImgPath = imgPath + gem["picname"] + ".jpg"
+							picture = open(thisImgPath, "rb").read()
+
+						newGem = Gem(location=ndb.GeoPt(gem["location"]), 
+							neighborhood=neighborhoodObj.key,
+							prices=gem["prices"], uv=gem["uv"],
+							ozone=gem["ozone"], confirmed=gem["confirmed"],
+							company=gem["company"], notes=gem["notes"],
+							gemusers=[], picture=picture)
+
+						newGem.put()
+						neighborhoodObj.gems.append(newGem.key)
+
+					neighborhoodObj.put()
+					cityObj.neighborhoods.append(neighborhoodObj.key)
+
+				cityObj.put()
+				countryObj.cities.append(cityObj.key)
+
+			countryObj.put()
 		'''
 
 		'''
@@ -261,7 +803,7 @@ class NewGem(Handler):
 		gem = Gem(**gemDict)
 		gem.put()
 
-		return redirect_to("viewgem", id=str(gem.key().id()))
+		return redirect_to("home")
 
 class Register(Handler):
 	''' Serve form for registering a new user
@@ -452,10 +994,6 @@ class Signin(Handler):
 		response.set_cookie("username", username_cookie_val)
 		return response
 
-class ViewGem(Handler):
-	''' Need this?
-	'''
-
 class EditGem(Handler):
 	''' Serve form to edit a specific gem
 	'''
@@ -491,7 +1029,7 @@ class EditGem(Handler):
 		gem.put()
 		'''
 
-		return redirect_to("viewgem", id=id)
+		return redirect_to("home")
 
 class DeleteDream(Handler):
 	''' Serve form to delete a dream
@@ -517,18 +1055,18 @@ class UseGem(Handler):
 		if not username:
 			return redirect_to("signin")
 
-		if user.key().id() == gem.user.key().id():
-			return redirect_to("viewgem", id=id)
+		if user.key.id == gem.user.key.id:
+			return redirect_to("home")
 
 		gemfinders = pickle.loads(str(gem.gemfinders))
 		gems = pickle.loads(str(user.gems))
 
-		if (not user.key().id() in gemfinders and 
+		if (not user.key.id in gemfinders and 
 			not long(id) in gems):
 
 			gem.numGemfinders += 1
 
-			gemfinders[user.key().id()] = True
+			gemfinders[user.key.id] = True
 			gem.gemfinders = pickle.dumps(gemfinders)
 			gem.put()
 
@@ -536,7 +1074,7 @@ class UseGem(Handler):
 			user.gems = pickle.dumps(gems)
 			user.put()
 
-		return redirect_to("viewgem", id=id)
+		return redirect_to("home")
 
 class About(Handler):
 	''' Serve about WaterGem page
@@ -558,7 +1096,8 @@ class Logout(Handler):
 		response.set_cookie("username", "")
 		return response
 
-# Ajax handlers
+# Ajax handlers 
+
 #empty
 
 app = webapp2.WSGIApplication(
@@ -568,8 +1107,6 @@ app = webapp2.WSGIApplication(
 		 webapp2.Route("/register", handler=Register, name="register"),
 		 webapp2.Route("/signin", handler=Signin, name="signin"),
 		 webapp2.Route("/logout", handler=Logout, name="logout"),
-		 webapp2.Route("/gem/view/<id>", 
-		 	handler=ViewGem, name="viewgem"),
 		 webapp2.Route("/gem/like/<id>", 
 		 	handler=UseGem, name="usegem"),
 		 webapp2.Route("/gem/edit/<id>", 
