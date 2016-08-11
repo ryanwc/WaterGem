@@ -6,6 +6,7 @@
 */
 
 // some css manipulation that cannot be done in the .css file
+setMapDivHeight();
 window.onresize = function(event) {
     
     setMapDivHeight();
@@ -20,14 +21,38 @@ function setMapDivHeight() {
 
 // define the Models
 var User = function (data) {
+// don't need this for Udacity
+	var self = this;
+
+	self.init = function () {
+
+		/*
+		ajax call to get logged in user
+		*/
+	}
+}
+
+var Gems = function (data) {
 
 	var self = this;
 
-	/*
+	self.getAllGems = function() {
 
-	ajax calls to server to get user data
+		$.ajax({
+			type: "GET",
+			url: "/AllGems"
+		}).done(function(data) {
+			
+			console.log(typeof data);
+			var dataJSON = JSON.parse(data);
+			console.log(dataJSON);
 
-	*/
+			var thisPicSrc = "data:image/png;base64," + dataJSON[0].picture;
+
+			$("#imgtest").attr("src", thisPicSrc);
+
+		});
+	};
 }
 
 var Gem = function (data) {
@@ -48,24 +73,37 @@ var Gem = function (data) {
 	self.notes = ko.observable(data.notes);
 	self.gemfinder = ko.observable(data.gemfinder);
 	self.gemusers = observableArray(data.gemusers);
-
-	/*
-
-	ajax calls to server to get gems
-
-	gemfinder = ndb.KeyProperty(kind=User)
-	gemusers = ndb.PickleProperty()
-
-	*/
 }
 
-var Location = function (data) {
+var country = function (data) {
 
 	var self = this;
 
 	/*
 
-	ajax calls to server to get locations
+	ajax calls to server to get countries
+
+	*/
+}
+
+var city= function (data) {
+
+	var self = this;
+
+	/*
+
+	ajax calls to server to get countries
+
+	*/
+}
+
+var neighborhood = function (data) {
+
+	var self = this;
+
+	/*
+
+	ajax calls to server to get countries
 
 	*/
 }
@@ -79,7 +117,7 @@ var ViewModel = function () {
 
 	self.gems = ko.observableArray([]);
 
-	populateGems = function(locations) {
+	self.populateGems = function(locations) {
 
 		/*
 		locations.forEach(function(location) {
@@ -94,7 +132,6 @@ var ViewModel = function () {
 
 // enable the KnockoutJS framework
 ko.applyBindings(new ViewModel);
-
 
 // embed the Google Map
 function initMap() {
@@ -165,4 +202,8 @@ function showDirections(destination, origin, travelMode, googleMap) {
       	}
     });
 }
+
+allGems = new Gems();
+console.log(allGems);
+allGems.getAllGems();
 

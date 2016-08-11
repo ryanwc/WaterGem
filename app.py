@@ -85,7 +85,6 @@ class Gem(ndb.Model):
 	gemfinder = ndb.KeyProperty()
 	gemusers = ndb.KeyProperty(repeated = True)
 
-
 ### initial pop data
 LOCALES = {
 	"Thailand":
@@ -571,6 +570,63 @@ LOCALES = {
 
 ### helper functions
 
+def ndb_Model_to_Dict(modelInstance):
+	''' Override to_dict so can serialize unserializable ndb properties
+	(like GeoPtProperty, BlobProperty, and KeyProperty)
+	'''
+	dict = {}
+	properties = None
+
+	if type(modelInstance) is Gem:
+		properties = Gem._properties
+	elif type(modelInstance) is User:
+		properties = User._properties
+	elif type(modelInstance) is Country:
+		properties = Country._properties
+	elif type(modelInstance) is City:
+		properties = City._properties
+	elif type(modelInstance) is Neighborhood:
+		properties = Neighborhood._properties
+
+	for property in properties:
+
+		if getattr(modelInstance, property):
+
+			if type(properties[property]) is ndb.GeoPtProperty:
+
+				dict[property] = str(getattr(modelInstance, property))
+			elif type(properties[property]) is ndb.BlobProperty:
+
+				dict[property] = getattr(modelInstance, property).encode('base64')
+			elif type(properties[property]) is ndb.KeyProperty:
+
+				thisKeyProperty = getattr(modelInstance, property)
+				serializedKeyProperty = None
+
+				if type(thisKeyProperty) is list:
+
+					serializedKeyProperty = []
+
+					for keyModelInstance in thisKeyProperty:
+						# guard against nones
+						if keyModelInstance:
+							kindIdPair = keyModelInstance.pairs()
+							serializedKeyProperty.append(kindIdPair)
+				else:
+					# guard against nones
+					if thisKeyProperty:
+						serializedKeyProperty = thisKeyProperty.pairs()
+
+				dict[property] = serializedKeyProperty
+			else:
+
+				dict[property] = getattr(modelInstance, property)
+		else:
+
+			dict[property] = None
+
+	return dict
+
 def make_salt():
 	''' Create salt for a hashed password
 	'''
@@ -805,6 +861,9 @@ class NewGem(Handler):
 
 		return redirect_to("home")
 
+#
+# implement register and user after Udacity project
+#
 class Register(Handler):
 	''' Serve form for registering a new user
 	'''
@@ -919,6 +978,9 @@ class Register(Handler):
 		'''
 		return response
 
+#
+# implement signin after Udacity project
+#
 class Signin(Handler):
 	''' Serve signin page
 	'''
@@ -1031,14 +1093,9 @@ class EditGem(Handler):
 
 		return redirect_to("home")
 
-class DeleteDream(Handler):
-	''' Serve form to delete a dream
-	'''
-	'''
-	Probably do not need this -- should be handled by flagging by users, if too many
-	flag as not exist render differently, then admins can do periodic maintenance to remove
-	'''
-
+#
+# implement after Udactity project
+#
 class UseGem(Handler):
 	''' Handle requests related to "use" (like) a gem
 	'''
@@ -1086,6 +1143,9 @@ class About(Handler):
 
 		self.render("about.html", username=username)
 
+#
+# implement after Udacity project
+#
 class Logout(Handler):
 	''' Handle requests related to logging out
 	'''
@@ -1098,20 +1158,60 @@ class Logout(Handler):
 
 # Ajax handlers 
 
-#empty
+class GetAllGems(Handler):
+	''' Handle requests for all gems
+	'''
+	def get(self):
+
+		gems = None
+
+		gems = Gem.query().fetch()
+
+		self.response.write(json.dumps([ndb_Model_to_Dict(gem) for gem in gems]))
+
+class GetSpecificGems(Handler):
+	''' Handle requests for specific gems
+	'''
+	def get(self):
+
+		queryParams = self.request.body
+		
+		'''
+		gems = some Gems query based on query params
+		return json.loads(gems)
+		'''
+
+class GetLocales(Handler):
+	''' Handle requests for all locales
+	'''
+	def get(self):
+
+		type = self.request.body
+
+		locales = None
+
+		if type == "Country":
+			locales = Country.all()
+		elif type == "City":
+			locales = City.all()
+		elif type == "Neighborhood":
+			locales = Neighborhood.all()
+
+		return json.loads(locales)
 
 app = webapp2.WSGIApplication(
 		[webapp2.Route("/home", handler=Home, name="index"),
-		 webapp2.Route("/home/<page>", handler=Home, name="home"),
 		 webapp2.Route("/about", handler=About, name="about"),
 		 webapp2.Route("/register", handler=Register, name="register"),
 		 webapp2.Route("/signin", handler=Signin, name="signin"),
 		 webapp2.Route("/logout", handler=Logout, name="logout"),
-		 webapp2.Route("/gem/like/<id>", 
-		 	handler=UseGem, name="usegem"),
-		 webapp2.Route("/gem/edit/<id>", 
-		 	handler=EditGem, name="editgem"),
-		 webapp2.Route("/gem/new", handler=NewGem, name="newgem")],
+		 webapp2.Route("/gem/like/<id>", handler=UseGem, name="usegem"),
+		 webapp2.Route("/gem/edit/<id>", handler=EditGem, name="editgem"),
+		 webapp2.Route("/gem/new", handler=NewGem, name="newgem"),
+		 webapp2.Route("/AllGems", handler=GetAllGems, name="getallgems"),
+		 webapp2.Route("/SpecificGems", handler=GetSpecificGems, 
+		 	name="getspecificgems"),
+		 webapp2.Route("/GetLocales", handler=GetLocales, name="getlocales")],
 		debug=True)
 
 

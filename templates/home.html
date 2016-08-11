@@ -10,32 +10,40 @@
 
 {% block pageContent %}
 
-	<div class="headerdiv">
+	<div class="headerdiv outerdiv">
 		<h1 id="headerlogo">WaterGem</h1>
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
 
+	<img id="imgtest" src="" alt="nope">
+
 	<!-- menu bar with filtering/selection -->
-	<div class="" id="menubar">
-		<div class="" id="countrydiv">
-			<select id="localeselect">
-				<option value="-1">-Select City-</option>
-				<option value="bangkok">Bangkok, Thailand</option>
-				<option value="chiangmai">Chiang Mai, Thailand</option>
+	<div class="outerdiv" id="menubar">
+		<div class="locationselect" id="countrydiv">
+			<select id="countryselect">
+				<option value="-1">-Select Country-</option>
 			</select>
 		</div>
-		<div class="" id="neighborhooddiv">
+		<div class="locationselect" id="citydiv">
+			<select id="cityselect">
+				<option value="-1">-Select City-</option>
+			</select>
+		</div>
+		<div class="locationselect" id="neighborhooddiv">
 			<select id="neighborhoodselect">
 				<option value="-1">-Select Neighborhood-</option>
 			</select>
 		</div>
-		<div class="" id="gemdiv">
+		<div class="locationselect" id="gemdiv">
+			<select id="gemselect">
+				<option value="-1">-Select Gem-</option>
+			</select>
 		</div>
 	</div>
 	<!-- end filtering/seletion -->
 
 	<!-- google map -->
-	<div class="" id="googlemapdiv">
+	<div class="outerdiv" id="googlemapdiv">
     	<div id="googlemap">
     	</div>
 	</div>
