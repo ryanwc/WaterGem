@@ -15,30 +15,25 @@
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
 
-	<!-- image test <img id="imgtest" src="" alt="nope"> -->
+	<!-- selected options section -->
+	<div class="infodiv">
+		<div id="wikidiv">
+		</div>
+		<div id="selectedimgdiv">
+			<img id="selectedgemimg" src="" alt="[pic of water station]" data-bind="src: selectedGemPic">
+		</div>
+	</div>
 
 	<!-- menu bar with filtering/selection -->
-	<!-- view starts with countries and cities from the server; Knockout handles the rest -->
 	<div class="outerdiv" id="menubar">
 		<div class="locationselect" id="countrydiv">
-			<select id="countryselect">
-				<option class="countryselectoption" value="-1">-Select Country-</option>
-			</select>
+			<select id="countryselect" data-bind="options: countries, optionsCaption: '-Select Country-', optionsText: 'name', value: selectedCountry"></select>
 		</div>
 		<div class="locationselect" id="citydiv">
-			<select id="cityselect">
-				<option class="cityselectoption" value="-1">-Select City-</option>
-			</select>
+			<select id="cityselect" data-bind="options: cities, optionsCaption: '-Select City-', optionsText: 'name', value: selectedCity"></select>
 		</div>
 		<div class="locationselect" id="neighborhooddiv">
-			<select id="neighborhoodselect">
-				<option value="-1">-Select Neighborhood-</option>
-			</select>
-		</div>
-		<div class="locationselect" id="gemdiv">
-			<select id="gemselect">
-				<option value="-1">-Select Gem-</option>
-			</select>
+			<select id="neighborhoodselect" data-bind="options: neighborhoods, optionsCaption: '-Select Neighborhood-', optionsText: 'name', value: selectedNeighborhood"></select>
 		</div>
 	</div>
 	<!-- end filtering/seletion -->

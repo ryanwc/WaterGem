@@ -625,6 +625,9 @@ def ndb_Model_to_Dict(modelInstance):
 
 			dict[property] = None
 
+	# apparently 'key' is not in Model._properties
+	dict["key"] = str(modelInstance.key.pairs())
+
 	return dict
 
 def make_salt():

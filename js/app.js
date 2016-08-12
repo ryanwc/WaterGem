@@ -34,33 +34,11 @@ var User = function (data) {
 }
 */
 
-var Gems = function (data) {
-
-	var self = this;
-
-	self.getAllGems = function() {
-
-		$.ajax({
-			type: "GET",
-			url: "/GetGems"
-		}).done(function(data) {
-			
-			console.log(typeof data);
-			var dataJSON = JSON.parse(data);
-			console.log(dataJSON);
-
-			var thisPicSrc = "data:image;base64," + dataJSON[0].picture;
-
-			$("#imgtest").attr("src", thisPicSrc);
-
-		});
-	};
-}
-
 var Gem = function (data) {
 
 	var self = this;
 
+	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
 	self.neighborhood = ko.observable(data["neighborhood"]);
 	self.picture = ko.observable(data["picture"]);
@@ -78,6 +56,7 @@ var Country = function (data) {
 
 	var self = this;
 
+	self.key = ko.observable(data["key"]);
 	self.name = ko.observable(data["name"]);
 	self.cities = ko.observableArray(data["cities"]);
 }
@@ -86,6 +65,7 @@ var City = function (data) {
 
 	var self = this;
 
+	self.key = ko.observable(data["key"]);
 	self.name = ko.observable(data["name"]);
 	self.country = ko.observable(data["country"]);
 	self.Neighborhoods = ko.observableArray(data["neighborhoods"]);
@@ -95,28 +75,10 @@ var Neighborhood = function (data) {
 
 	var self = this;
 
+	self.key = ko.observable(data["key"]);
 	self.name = ko.observable(data["name"]);
 	self.city = ko.observable(data["city"]);
 	self.gems = ko.observableArray(data["gems"]);
-}
-
-var Neighborhoods = function (data) {
-
-	var self = this;
-
-	self.getAllCountries = function() {
-
-		$.ajax({
-			type: "GET",
-			url: "/AllLocations",
-			headers: {"locale":"neighborhood"}
-		}).done(function(data) {
-			
-			console.log(typeof data);
-			var dataJSON = JSON.parse(data);
-			console.log(dataJSON);
-		});
-	};
 }
 
 /*
@@ -128,56 +90,242 @@ var ViewModel = function () {
 
 	var self = this;
 
-	self.countries = ko.observableArray();
-	self.cities = ko.observableArray();
-	self.neighborhoods = ko.observableArray();
+	// arrays hold all of type seen in this session
+	self.countries = ko.observableArray([]);
+	self.cities = ko.observableArray([]);
+	self.neighborhoods = ko.observableArray([]);
 	self.gems = ko.observableArray([]);
 
+	// holds user selections
 	self.selectedGem = ko.observable();
+	self.selectedGemPic = ko.observable();
 	self.selectedNeighborhood = ko.observable();
 	self.selectedCity = ko.observable();
 	self.selectedCountry = ko.observable();
 
-	// run once on initialization
+	self.selectCountry = function (selectedCountry) {
+
+		console.log("current selected country is " + self.selectedCountry());
+		console.log("propsed is " + selectedCountry);
+
+		if (!selectedCountry) {
+
+			console.log("Selected nothing");
+			self.resetSelectedCity();
+			self.resetSelectedNeighborhood();
+			self.resetSelectedGem();		
+		}
+		else if (selectedCountry != self.selectedCountry()) {
+
+			self.selectedCountry(selectedCountry);
+			console.log("changed to " + self.selectedCountry());
+			self.filterCities();
+			self.resetSelectedCity();
+			self.resetSelectedNeighborhood();
+			self.resetSelectedGem();
+		}
+	};
+
+	self.selectCity = function (selectedCity) {
+
+		if (selectedCity != self.selectedCity()) {
+
+			self.selectedCity(selectedCity);
+			self.filterNeighborhoods();
+			self.resetSelectedNeighborhood();
+			self.resetSelectedGem();
+
+			// get country and set selected if not already selected
+		}
+	};
+
+	self.selectNeighborhood = function (selectedNeighborhood) {
+
+		if (selectedNeighborhood != self.selectedNeighborhood()) {
+		
+			self.selectedNeighborhood(selectedNeighborhood);
+			self.filterGems();
+		}
+	};
+
+	self.selectGem = function (selectedGem) {
+
+		if (selectedGem != self.selectedGem()) {
+
+			self.selectedGem(selectedGem);
+			self.animateGem(self.selectedGem);
+
+			var thisPicSrc = "data:image;base64," + dataJSON[0].picture;
+
+			$("#imgtest").attr("src", thisPicSrc);
+		}
+	};
+
+	self.filterCities = function () {
+
+
+	};
+
+	self.filterNeighborhoods = function () {
+
+
+	};
+
+	self.filterGems = function () {
+
+
+	};
+
+	self.resetSelectedCity = function () {
+
+		$("#cityselect").val("-1");
+	};
+
+	self.resetSelectedNeighborhood = function () {
+
+		$("#neighborhoodselect").val("-1");
+	};
+
+	self.resetSelectedGem = function () {
+
+		$("#gemselect").val("-1");
+	};
+
+	self.animateGem = function (gem) {
+
+
+	};
+
+	self.getCountry = function (countryName) {
+		// get country from list of countries by name
+
+		for (var i = 0; i < self.countries.length; i++) {
+
+			if (self.countries[i]().name() == countryName) {
+
+				return self.countries[i];
+			}
+		}
+
+		return null;
+	};
+
+	self.getCity = function (cityName) {
+		// get city from list of cities by name
+
+		for (var i = 0; i < self.cities.length; i++) {
+
+			if (self.cities[i]().name() == cityName) {
+
+				return self.cities[i];
+			}
+		}
+
+		return null;		
+	};
+
+	self.getNeighborhood = function (neighborhoodName) {
+		// get city from list of cities by name
+
+		for (var i = 0; i < self.neighborhoods.length; i++) {
+
+			if (self.neighborhoods[i]().name() == neighborhoodName) {
+
+				return self.neighborhoods[i];
+			}
+		}
+
+		return null;
+	};
+
+	self.getGem = function (location) {
+		// get gem from list of gems by location
+
+		for (var i = 0; i < self.gems.length; i++) {
+
+			if (self.gems[i].location() == location) {
+
+				return self.gems[i];
+			}
+		}
+
+		return null;			
+	};
+
+	self.populateCountries = function (countriesJSON) {
+
+		self.countries([]);
+
+		for (var i = 0; i < countriesJSON.length; i++) {
+		
+			country = new Country(countriesJSON[i]);
+			self.countries.push(country);
+		}
+	};
+
+	self.populateCities = function (citiesJSON) {
+
+		self.cities([]);
+
+		for (var i = 0; i < citiesJSON.length; i++) {
+		
+			city = new City(citiesJSON[i]);
+			self.cities.push(city);
+		}
+	};
+
+	self.populateNeighborhoods = function (neighborhoodsJSON) {
+
+		self.neighborhoods([]);
+
+		for (var i = 0; i < neighborhoodsJSON.length; i++) {
+		
+			neighborhood = new Neighborhood(neighborhoodsJSON[i]);
+			self.neighborhoods.push(neighborhood);
+		}
+	};
+
+	self.populateLocale = function(kind, pythonDictParamString) {
+		// ajax query to server for locales (e.g., countries, cities)
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"Kind":kind, "Queryparams":pythonDictParamString}
+		}).done(function(data) {
+			
+			var dataJSON = JSON.parse(data);
+
+			if (kind == "country") {
+
+				self.populateCountries(dataJSON);
+			}
+			else if (kind == "city") {
+
+				self.populateCities(dataJSON);
+			}
+			else if (kind == "neighborhood") {
+
+				self.populateNeighborhoods(dataJSON);
+			}
+		});
+	};
+
+	self.populateGems = function(neighborhoodKey) {
+
+		$.ajax({
+			type: "GET",
+			url: "/GetGems"
+		}).done(function(data) {
+
+			var dataJSON = JSON.parse(data);
+		});
+	};
+
+	// initialize country and city selects when app starts
 	(function() {
 
-		// get countries and populate select
-		$.ajax({
-			type: "GET",
-			url: "/GetLocales",
-			headers: {"Kind":"country", "Queryparams":""}
-		}).done(function(data) {
-			
-			var dataJSON = JSON.parse(data);
-			var countrySelect = $("#countryselect");
-			var country;
-
-			for (var i = 0; i < dataJSON.length; i++) {
-			
-				countrySelect.append("<option class='countryselectoption' value='"+dataJSON[i]["name"]+"'>"+dataJSON[i]['name']+"</option>");
-				country = new Country(dataJSON[i]);
-				self.countries.push(country);
-			}
-		});
-
-		// get cities and populate select
-		$.ajax({
-			type: "GET",
-			url: "/GetLocales",
-			headers: {"Kind":"city", "Queryparams":""}
-		}).done(function(data) {
-			
-			var dataJSON = JSON.parse(data);
-			var citySelect = $("#cityselect");
-			var city;
-
-			for (var i = 0; i < dataJSON.length; i++) {
-				
-				citySelect.append("<option class='cityselectoption' value='"+dataJSON[i]["name"]+"'>"+dataJSON[i]['name']+"</option>");
-				city = new City(dataJSON[i]);
-				self.cities.push(city);
-			}
-		});
+		self.populateLocale("country", "");
+		self.populateLocale("city", "");
 	})();
 }
 
@@ -274,8 +422,4 @@ function setMapDivHeight() {
 */
 // enable the KnockoutJS framework
 ko.applyBindings(new ViewModel);
-
-allGems = new Gems();
-console.log(allGems);
-//allGems.getAllGems();
 
