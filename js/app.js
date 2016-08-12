@@ -61,86 +61,43 @@ var Gem = function (data) {
 
 	var self = this;
 
-	self.location = ko.observable(data.location);
-	self.country = ko.observable(data.country);
-	self.city = ko.observable(data.city);
-	self.neighborhood = ko.observable(data.neighborhood);
-	self.picture = ko.observable(data.picture);
-	self.prices = ko.observableArray(data.price);
-	self.uv = ko.observable(data.uv);
-	self.ozone = ko.observable(data.ozone);
-	self.confirmed = ko.observable(data.confirmed);
-	self.company = ko.observable(data.company);
-	self.notes = ko.observable(data.notes);
-	self.gemfinder = ko.observable(data.gemfinder);
-	self.gemusers = observableArray(data.gemusers);
+	self.location = ko.observable(data["location"]);
+	self.neighborhood = ko.observable(data["neighborhood"]);
+	self.picture = ko.observable(data["picture"]);
+	self.prices = ko.observableArray(data["price"]);
+	self.uv = ko.observable(data["uv"]);
+	self.ozone = ko.observable(data["ozone"]);
+	self.confirmed = ko.observable(data["confirmed"]);
+	self.company = ko.observable(data["company"]);
+	self.notes = ko.observable(data["notes"]);
+	self.gemfinder = ko.observable(data["gemfinder"]);
+	self.gemusers = observableArray(data["gemusers"]);
 }
 
 var Country = function (data) {
 
 	var self = this;
-}
 
-var Countries = function (data) {
-
-	var self = this;
-
-	self.getAllCountries = function() {
-
-		$.ajax({
-			type: "GET",
-			url: "/GetLocales",
-			headers: {"locale":"country"}
-		}).done(function(data) {
-			
-			console.log(typeof data);
-			var dataJSON = JSON.parse(data);
-			console.log(dataJSON);
-		});
-	};
+	self.name = ko.observable(data["name"]);
+	self.cities = ko.observableArray(data["cities"]);
 }
 
 var City = function (data) {
 
 	var self = this;
-}
 
-var Cities = function (data) {
-
-	var self = this;
-
-	self.getAllCities = function() {
-
-		$.ajax({
-			type: "GET",
-			url: "/GetLocales",
-			headers: {"kind":"city"}
-		}).done(function(data) {
-			
-			console.log(typeof data);
-			var dataJSON = JSON.parse(data);
-			console.log(dataJSON);
-		});
-	};
+	self.name = ko.observable(data["name"]);
+	self.country = ko.observable(data["country"]);
+	self.Neighborhoods = ko.observableArray(data["neighborhoods"]);
 }
 
 var Neighborhood = function (data) {
 
 	var self = this;
 
-	self.getAllNeighborhoods = function() {
-
-		$.ajax({
-			type: "GET",
-			url: "/GetLocales",
-			headers: {"kind":"neighborhood"}
-		}).done(function(data) {
-			
-			console.log(typeof data);
-			var dataJSON = JSON.parse(data);
-			console.log(dataJSON);
-		});
-	};
+	self.name = ko.observable(data["name"]);
+	self.city = ko.observable(data["city"]);
+	self.gems = ko.observableArray(data["gems"]);
 }
 
 var Neighborhoods = function (data) {
@@ -171,19 +128,57 @@ var ViewModel = function () {
 
 	var self = this;
 
-	self.locations = ko.observableArray([]);
-
+	self.countries = ko.observableArray();
+	self.cities = ko.observableArray();
+	self.neighborhoods = ko.observableArray();
 	self.gems = ko.observableArray([]);
-
-	self.init = function() {
-
-		// get all countries
-	};
 
 	self.selectedGem = ko.observable();
 	self.selectedNeighborhood = ko.observable();
 	self.selectedCity = ko.observable();
 	self.selectedCountry = ko.observable();
+
+	// run once on initialization
+	(function() {
+
+		// get countries and populate select
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"Kind":"country", "Queryparams":""}
+		}).done(function(data) {
+			
+			var dataJSON = JSON.parse(data);
+			var countrySelect = $("#countryselect");
+			var country;
+
+			for (var i = 0; i < dataJSON.length; i++) {
+			
+				countrySelect.append("<option class='countryselectoption' value='"+dataJSON[i]["name"]+"'>"+dataJSON[i]['name']+"</option>");
+				country = new Country(dataJSON[i]);
+				self.countries.push(country);
+			}
+		});
+
+		// get cities and populate select
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"Kind":"city", "Queryparams":""}
+		}).done(function(data) {
+			
+			var dataJSON = JSON.parse(data);
+			var citySelect = $("#cityselect");
+			var city;
+
+			for (var i = 0; i < dataJSON.length; i++) {
+				
+				citySelect.append("<option class='cityselectoption' value='"+dataJSON[i]["name"]+"'>"+dataJSON[i]['name']+"</option>");
+				city = new City(dataJSON[i]);
+				self.cities.push(city);
+			}
+		});
+	})();
 }
 
 /*

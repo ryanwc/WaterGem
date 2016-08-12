@@ -23,17 +23,11 @@
 		<div class="locationselect" id="countrydiv">
 			<select id="countryselect">
 				<option class="countryselectoption" value="-1">-Select Country-</option>
-				{% for country in countries %}
-				<option class="countryselectoption" id="{{country.name}}select" value="{{country.name}}">{{country.name}}</option>
-				{% endfor %}
 			</select>
 		</div>
 		<div class="locationselect" id="citydiv">
 			<select id="cityselect">
 				<option class="cityselectoption" value="-1">-Select City-</option>
-				{% for city in cities %}
-				<option class="cityselectoption" id="{{city.name}}select" value="{{city.name}}">{{city.name}}</option>
-				{% endfor %}
 			</select>
 		</div>
 		<div class="locationselect" id="neighborhooddiv">

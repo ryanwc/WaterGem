@@ -5,7 +5,7 @@ Written for Google App Engine. Persist data to Google Datastore.
 '''
 import os, webapp2, jinja2, re, hashlib, hmac, random, datetime, json
 from datetime import date
-import string, cPickle as pickle
+import string, ast
 from webapp2 import redirect_to
 from google.appengine.ext import ndb
 
@@ -791,16 +791,7 @@ class Home(Handler):
 			countryObj.put()
 		'''
 
-		countries = Country.query().fetch()
-		cities = City.query().fetch()
-
-		for country in countries: 
-			print country
-		for city in cities:
-			print city
-
-		self.render("home.html", username=username,
-			countries=countries, cities=cities)
+		self.render("home.html", username=username)
 
 class NewGem(Handler):
 	''' Serve form to add a new Gem
@@ -1164,34 +1155,77 @@ class Logout(Handler):
 
 # Ajax handlers 
 class GetGems(Handler):
-	''' Handle requests for specific gems
+	''' Handle requests for gems
 	'''
 	def get(self):
 
 		queryParams = self.request.headers["queryParams"]
+		queryDict = {}
 		
-		gems = Gem.query(**queryParams).fetch()
+		gems = Gem.query()
+		gems = gems.order(Gem.name)
+		properties = Gem._properties
 
-		self.response.write(json.dumps([ndb_Model_to_Dict(gem) for gem in gems]))
+		# filter iteratively
+		if queryParams:
+			queryDict = ast.literal_eval(queryParams)
+
+			for param in queryDict:
+
+				property = properties[param]
+				gems = gems.filter(property = queryDict[param])
+
+		gems = gems.fetch()
+		self.response.write(json.\
+			dumps([ndb_Model_to_Dict(gem) for gem in gems]))
 
 class GetLocales(Handler):
-	''' Handle requests for all locales
+	''' Handle requests for all kinds of locales
 	'''
 	def get(self):
 
-		kind = self.request.headers["kind"]
-		queryParams = self.request.headers["queryParams"]
-
+		kind = self.request.headers["Kind"]
+		queryParams = self.request.headers["Queryparams"]
+		queryDict = {}
+		properties = None
 		locales = None
 
-		if kind == "Country":
-			locales = Country.query(**queryParams).fetch()
-		elif kind == "City":
-			locales = City.query(**queryParams).fetch()
-		elif kind == "Neighborhood":
-			locales = Neighborhood.query(**queryParams).fetch()
+		print "********************************************************************************"
+		print kind
 
-		self.response.write(json.dumps([ndb_Model_to_Dict(locale) for locale in locales]))
+		# get all of relevant locales
+		if kind == "country":
+			print "getting countries"
+
+			locales = Country.query()
+			locales.order(Country.name)
+			properties = Country._properties
+		elif kind == "city":
+			print "getting cities"
+
+			locales = City.query()
+			locales.order(City.name)
+			properties = City._properties
+		elif kind == "neighborhood":
+
+			locales = Neighborhood.query()
+			locales.order(Neighborhood.name)
+			properties = Neighborhood._properties
+
+		# iteratively filter results if params provided
+		if queryParams:
+
+			print "filtering"
+
+			queryDict = ast.literal_eval(queryParams)
+
+			for param in queryParams:
+
+				locales = locales.filter(param = queryDict[param])
+
+		locales = locales.fetch()
+		self.response.write(json.\
+			dumps([ndb_Model_to_Dict(locale) for locale in locales]))
 
 app = webapp2.WSGIApplication(
 		[webapp2.Route("/home", handler=Home, name="index"),
