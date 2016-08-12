@@ -5,32 +5,34 @@
 *
 */
 
-// some css manipulation that cannot be done in the .css file
+/*
+*
+*	CSS manupilation that should not be done in .css file
+*
+*/
 setMapDivHeight();
 window.onresize = function(event) {
     
     setMapDivHeight();
 };
 
-// helper functions
-function setMapDivHeight() {
+/*
+*
+*	Models
+*
+*/
 
-    var width = $('#googlemapdiv').width();
-	$('#googlemapdiv').css({'height':width+'px'});
-}
-
-// define the Models
+/* TO-DO: implement after Udacity
 var User = function (data) {
 // don't need this for Udacity
 	var self = this;
 
 	self.init = function () {
 
-		/*
 		ajax call to get logged in user
-		*/
 	}
 }
+*/
 
 var Gems = function (data) {
 
@@ -40,14 +42,14 @@ var Gems = function (data) {
 
 		$.ajax({
 			type: "GET",
-			url: "/AllGems"
+			url: "/GetGems"
 		}).done(function(data) {
 			
 			console.log(typeof data);
 			var dataJSON = JSON.parse(data);
 			console.log(dataJSON);
 
-			var thisPicSrc = "data:image/png;base64," + dataJSON[0].picture;
+			var thisPicSrc = "data:image;base64," + dataJSON[0].picture;
 
 			$("#imgtest").attr("src", thisPicSrc);
 
@@ -63,7 +65,6 @@ var Gem = function (data) {
 	self.country = ko.observable(data.country);
 	self.city = ko.observable(data.city);
 	self.neighborhood = ko.observable(data.neighborhood);
-	self.neighborhoodid = ko.observable(data.neighborhoodid);
 	self.picture = ko.observable(data.picture);
 	self.prices = ko.observableArray(data.price);
 	self.uv = ko.observable(data.uv);
@@ -75,40 +76,97 @@ var Gem = function (data) {
 	self.gemusers = observableArray(data.gemusers);
 }
 
-var country = function (data) {
+var Country = function (data) {
+
+	var self = this;
+}
+
+var Countries = function (data) {
 
 	var self = this;
 
-	/*
+	self.getAllCountries = function() {
 
-	ajax calls to server to get countries
-
-	*/
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"locale":"country"}
+		}).done(function(data) {
+			
+			console.log(typeof data);
+			var dataJSON = JSON.parse(data);
+			console.log(dataJSON);
+		});
+	};
 }
 
-var city= function (data) {
+var City = function (data) {
+
+	var self = this;
+}
+
+var Cities = function (data) {
 
 	var self = this;
 
-	/*
+	self.getAllCities = function() {
 
-	ajax calls to server to get countries
-
-	*/
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"kind":"city"}
+		}).done(function(data) {
+			
+			console.log(typeof data);
+			var dataJSON = JSON.parse(data);
+			console.log(dataJSON);
+		});
+	};
 }
 
-var neighborhood = function (data) {
+var Neighborhood = function (data) {
 
 	var self = this;
 
-	/*
+	self.getAllNeighborhoods = function() {
 
-	ajax calls to server to get countries
-
-	*/
+		$.ajax({
+			type: "GET",
+			url: "/GetLocales",
+			headers: {"kind":"neighborhood"}
+		}).done(function(data) {
+			
+			console.log(typeof data);
+			var dataJSON = JSON.parse(data);
+			console.log(dataJSON);
+		});
+	};
 }
 
-// define the ViewModel
+var Neighborhoods = function (data) {
+
+	var self = this;
+
+	self.getAllCountries = function() {
+
+		$.ajax({
+			type: "GET",
+			url: "/AllLocations",
+			headers: {"locale":"neighborhood"}
+		}).done(function(data) {
+			
+			console.log(typeof data);
+			var dataJSON = JSON.parse(data);
+			console.log(dataJSON);
+		});
+	};
+}
+
+/*
+*
+*	ViewModel
+*
+*/
 var ViewModel = function () {
 
 	var self = this;
@@ -117,22 +175,22 @@ var ViewModel = function () {
 
 	self.gems = ko.observableArray([]);
 
-	self.populateGems = function(locations) {
+	self.init = function() {
 
-		/*
-		locations.forEach(function(location) {
-
-			self.locations.push(new Location(location));
-		});
-*/
+		// get all countries
 	};
 
 	self.selectedGem = ko.observable();
+	self.selectedNeighborhood = ko.observable();
+	self.selectedCity = ko.observable();
+	self.selectedCountry = ko.observable();
 }
 
-// enable the KnockoutJS framework
-ko.applyBindings(new ViewModel);
-
+/*
+*
+*	GoogleMaps
+*
+*/
 // embed the Google Map
 function initMap() {
 
@@ -203,7 +261,26 @@ function showDirections(destination, origin, travelMode, googleMap) {
     });
 }
 
+/*
+*
+*	Helper functions
+*
+*/
+function setMapDivHeight() {
+
+    var width = $('#googlemapdiv').width();
+	$('#googlemapdiv').css({'height':width+'px'});
+}
+
+/*
+*
+*	Initialize and run the app
+*
+*/
+// enable the KnockoutJS framework
+ko.applyBindings(new ViewModel);
+
 allGems = new Gems();
 console.log(allGems);
-allGems.getAllGems();
+//allGems.getAllGems();
 

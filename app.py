@@ -791,10 +791,16 @@ class Home(Handler):
 			countryObj.put()
 		'''
 
-		'''
-		pass all relevant data to to browser
-		'''
-		self.render("home.html", username=username)
+		countries = Country.query().fetch()
+		cities = City.query().fetch()
+
+		for country in countries: 
+			print country
+		for city in cities:
+			print city
+
+		self.render("home.html", username=username,
+			countries=countries, cities=cities)
 
 class NewGem(Handler):
 	''' Serve form to add a new Gem
@@ -1157,47 +1163,35 @@ class Logout(Handler):
 		return response
 
 # Ajax handlers 
-
-class GetAllGems(Handler):
-	''' Handle requests for all gems
-	'''
-	def get(self):
-
-		gems = None
-
-		gems = Gem.query().fetch()
-
-		self.response.write(json.dumps([ndb_Model_to_Dict(gem) for gem in gems]))
-
-class GetSpecificGems(Handler):
+class GetGems(Handler):
 	''' Handle requests for specific gems
 	'''
 	def get(self):
 
-		queryParams = self.request.body
+		queryParams = self.request.headers["queryParams"]
 		
-		'''
-		gems = some Gems query based on query params
-		return json.loads(gems)
-		'''
+		gems = Gem.query(**queryParams).fetch()
+
+		self.response.write(json.dumps([ndb_Model_to_Dict(gem) for gem in gems]))
 
 class GetLocales(Handler):
 	''' Handle requests for all locales
 	'''
 	def get(self):
 
-		type = self.request.body
+		kind = self.request.headers["kind"]
+		queryParams = self.request.headers["queryParams"]
 
 		locales = None
 
-		if type == "Country":
-			locales = Country.all()
-		elif type == "City":
-			locales = City.all()
-		elif type == "Neighborhood":
-			locales = Neighborhood.all()
+		if kind == "Country":
+			locales = Country.query(**queryParams).fetch()
+		elif kind == "City":
+			locales = City.query(**queryParams).fetch()
+		elif kind == "Neighborhood":
+			locales = Neighborhood.query(**queryParams).fetch()
 
-		return json.loads(locales)
+		self.response.write(json.dumps([ndb_Model_to_Dict(locale) for locale in locales]))
 
 app = webapp2.WSGIApplication(
 		[webapp2.Route("/home", handler=Home, name="index"),
@@ -1208,9 +1202,7 @@ app = webapp2.WSGIApplication(
 		 webapp2.Route("/gem/like/<id>", handler=UseGem, name="usegem"),
 		 webapp2.Route("/gem/edit/<id>", handler=EditGem, name="editgem"),
 		 webapp2.Route("/gem/new", handler=NewGem, name="newgem"),
-		 webapp2.Route("/AllGems", handler=GetAllGems, name="getallgems"),
-		 webapp2.Route("/SpecificGems", handler=GetSpecificGems, 
-		 	name="getspecificgems"),
+		 webapp2.Route("/GetGems", handler=GetGems, name="getgems"),
 		 webapp2.Route("/GetLocales", handler=GetLocales, name="getlocales")],
 		debug=True)
 

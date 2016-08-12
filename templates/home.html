@@ -15,18 +15,25 @@
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
 
-	<img id="imgtest" src="" alt="nope">
+	<!-- image test <img id="imgtest" src="" alt="nope"> -->
 
 	<!-- menu bar with filtering/selection -->
+	<!-- view starts with countries and cities from the server; Knockout handles the rest -->
 	<div class="outerdiv" id="menubar">
 		<div class="locationselect" id="countrydiv">
 			<select id="countryselect">
-				<option value="-1">-Select Country-</option>
+				<option class="countryselectoption" value="-1">-Select Country-</option>
+				{% for country in countries %}
+				<option class="countryselectoption" id="{{country.name}}select" value="{{country.name}}">{{country.name}}</option>
+				{% endfor %}
 			</select>
 		</div>
 		<div class="locationselect" id="citydiv">
 			<select id="cityselect">
-				<option value="-1">-Select City-</option>
+				<option class="cityselectoption" value="-1">-Select City-</option>
+				{% for city in cities %}
+				<option class="cityselectoption" id="{{city.name}}select" value="{{city.name}}">{{city.name}}</option>
+				{% endfor %}
 			</select>
 		</div>
 		<div class="locationselect" id="neighborhooddiv">
