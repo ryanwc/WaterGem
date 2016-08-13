@@ -103,50 +103,75 @@ var ViewModel = function () {
 	self.selectedCity = ko.observable();
 	self.selectedCountry = ko.observable();
 
-	self.selectCountry = function (selectedCountry) {
+	// narrow options based on selections
+	self.optionCities = ko.observableArray([]);
+	self.optionNeighborhoods = ko.observableArray([]);
+	self.optionGems = ko.observableArray([]);
 
-		console.log("current selected country is " + self.selectedCountry());
-		console.log("propsed is " + selectedCountry);
+	/* Do stuff when selections change 
+	*/
+	self.selectedCountry.subscribe(function(newSelection) {
 
-		if (!selectedCountry) {
+    	self.filterCities();
+    	self.resetOptions("neighborhood");
+    	self.resetOptions("gem");
+    	// center map
+    	// display info about country
+	});
 
-			console.log("Selected nothing");
-			self.resetSelectedCity();
-			self.resetSelectedNeighborhood();
-			self.resetSelectedGem();		
+	self.selectedCity.subscribe(function(newSelection) {
+
+		self.filterNeighborhoods();
+    	self.filterGems();
+    	// center map
+    	// show selected city gems
+    	// display info about city
+	});
+
+	self.selectedNeighborhood.subscribe(function(newSelection) {
+
+    	self.filterGems();
+
+    	if (!self.selectedGem()) {
+    		// triggered by selecting neighborhood
+
+	      	// center map on neighborhood, hopefully showing boundaries
+	    	// show selected neighborhood gems
+	    	// display info about neighborhood  		
+	    }
+	    else {
+	    	// triggered by 
+	    	// hopefully show neighborhood boundaries
+	    }
+	});	
+
+	self.resetOptions = function (selectionType) {
+
+		if (selectionType == "city") {
+
+			self.optionCities.removeAll();
 		}
-		else if (selectedCountry != self.selectedCountry()) {
+		else if (selectionType == "neighborhood") {
 
-			self.selectedCountry(selectedCountry);
-			console.log("changed to " + self.selectedCountry());
-			self.filterCities();
-			self.resetSelectedCity();
-			self.resetSelectedNeighborhood();
-			self.resetSelectedGem();
+			self.optionNeighborhoods.removeAll();
 		}
-	};
+		else if (selectionType == "gem") {
 
-	self.selectCity = function (selectedCity) {
-
-		if (selectedCity != self.selectedCity()) {
-
-			self.selectedCity(selectedCity);
-			self.filterNeighborhoods();
-			self.resetSelectedNeighborhood();
-			self.resetSelectedGem();
-
-			// get country and set selected if not already selected
+			self.optionGems.removeAll();
 		}
-	};
+	}
 
-	self.selectNeighborhood = function (selectedNeighborhood) {
+	self.selectedGem.subscribe(function(newSelection) {
 
-		if (selectedNeighborhood != self.selectedNeighborhood()) {
-		
-			self.selectedNeighborhood(selectedNeighborhood);
-			self.filterGems();
+		if (newSelection) {
+
+			// setSelectedNeighborhood
+			// center map on gem
+			// animate gem
+			// display info about neighborhood
+			// display info about gem
 		}
-	};
+	});
 
 	self.selectGem = function (selectedGem) {
 
@@ -162,19 +187,94 @@ var ViewModel = function () {
 	};
 
 	self.filterCities = function () {
+		// filter cities by getting country from datastore and seeing
+		// if it matches the selected country
+		self.resetOptions("city");
 
+		for (var i = 0; i < self.cities().length; i++) {
 
+			var thisCity = self.cities()[i];
+			var thisCityCountryKey = self.cities()[i].country();
+			var currentCountryName = self.selectedCountry().name();
+
+			// to preserve current city and country in for loop
+			(function(thisCity, thisCityCountryKey, currentCountryName) {
+
+				$.ajax({
+					type: "GET",
+					url: "/GetByKey",
+					headers: {"key":thisCityCountryKey}
+				}).done(function(data) {
+					
+					var dataJSON = JSON.parse(data);
+
+					if (dataJSON["name"] == self.selectedCountry().name()) {
+
+						self.optionCities.push(thisCity);
+					}
+				});
+			})(thisCity, thisCityCountryKey, currentCountryName);
+		}
 	};
 
+	// maybe i could pass a singular ajax call a callback function instead of re-typing?
+
 	self.filterNeighborhoods = function () {
+		// filter neighborhoods by getting city from datastore and seeing
+		// if it matches the selected city
+		self.resetOptions("neighborhood");
 
+		for (var i = 0; i < self.neighborhoods().length; i++) {
 
+			$.ajax({
+				type: "GET",
+				url: "/GetByKey",
+				headers: {"key":self.neighborhoods()[i]["key"]}
+			}).done(function(data) {
+				
+				var dataJSON = JSON.parse(data);
+
+				if (dataJSON["name"] == self.selectedCity().name) {
+
+					self.optionNeighborhoods().push(self.neighborhoods()[i]);
+				}
+			});
+		}
 	};
 
 	self.filterGems = function () {
+		// filter gems by getting city from datastore and seeing
+		// if it matches the selected city
+		self.resetOptions("gem");
 
+		for (var i = 0; i < self.gems().length; i++) {
 
+			// nested because gems store key to neighborhood, neighborhood stores key to city
+			$.ajax({
+				type: "GET",
+				url: "/GetByKey",
+				headers: {"key":self.gems()[i]["key"]}
+			}).done(function(data) {
+				
+				var neighborhoodDataJSON = JSON.parse(data);
+
+				$.ajax({
+					type: "GET",
+					url: "/GetByKey",
+					headers: {"key":neighborhoodDataJSON["key"]}
+				}).done(function(data) {
+					
+					if (dataJSON["name"] == self.selectedCity().name) {
+
+						var cityDataJSON = JSON.parse(data);
+						self.optionGems().push(self.gems()[i]);
+					}
+				});
+			});
+		}
 	};
+
+
 
 	self.resetSelectedCity = function () {
 
@@ -254,7 +354,7 @@ var ViewModel = function () {
 
 	self.populateCountries = function (countriesJSON) {
 
-		self.countries([]);
+		self.countries.removeAll();
 
 		for (var i = 0; i < countriesJSON.length; i++) {
 		
@@ -265,7 +365,7 @@ var ViewModel = function () {
 
 	self.populateCities = function (citiesJSON) {
 
-		self.cities([]);
+		self.cities.removeAll();
 
 		for (var i = 0; i < citiesJSON.length; i++) {
 		
@@ -276,7 +376,7 @@ var ViewModel = function () {
 
 	self.populateNeighborhoods = function (neighborhoodsJSON) {
 
-		self.neighborhoods([]);
+		self.neighborhoods.removeAll();
 
 		for (var i = 0; i < neighborhoodsJSON.length; i++) {
 		
@@ -324,6 +424,8 @@ var ViewModel = function () {
 	// initialize country and city selects when app starts
 	(function() {
 
+		// if more than one country, should not populate cities at start
+		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
 		self.populateLocale("city", "");
 	})();

@@ -610,8 +610,10 @@ def ndb_Model_to_Dict(modelInstance):
 					for keyModelInstance in thisKeyProperty:
 						# guard against nones
 						if keyModelInstance:
-							kindIdPair = keyModelInstance.pairs()
-							serializedKeyProperty.append(kindIdPair)
+							keyKind = keyModelInstance.kind()
+							keyId = keyModelInstance.id()
+							serializedKeyProperty.append(keyKind)
+							serializedKeyProperty.append(keyId)
 				else:
 					# guard against nones
 					if thisKeyProperty:
@@ -626,7 +628,12 @@ def ndb_Model_to_Dict(modelInstance):
 			dict[property] = None
 
 	# apparently 'key' is not in Model._properties
-	dict["key"] = str(modelInstance.key.pairs())
+	thisKey = []
+	thisKeyKind = modelInstance.key.kind()
+	thisKeyId = modelInstance.key.id()
+	thisKey.append(thisKeyKind)
+	thisKey.append(thisKeyId)
+	dict["key"] = thisKey
 
 	return dict
 
@@ -1193,18 +1200,13 @@ class GetLocales(Handler):
 		properties = None
 		locales = None
 
-		print "********************************************************************************"
-		print kind
-
 		# get all of relevant locales
 		if kind == "country":
-			print "getting countries"
 
 			locales = Country.query()
 			locales.order(Country.name)
 			properties = Country._properties
 		elif kind == "city":
-			print "getting cities"
 
 			locales = City.query()
 			locales.order(City.name)
@@ -1218,8 +1220,6 @@ class GetLocales(Handler):
 		# iteratively filter results if params provided
 		if queryParams:
 
-			print "filtering"
-
 			queryDict = ast.literal_eval(queryParams)
 
 			for param in queryParams:
@@ -1229,6 +1229,23 @@ class GetLocales(Handler):
 		locales = locales.fetch()
 		self.response.write(json.\
 			dumps([ndb_Model_to_Dict(locale) for locale in locales]))
+
+class GetInstanceByKey(Handler):
+	''' Handle requests to get datastore entity by key
+	Theoretically should automatically use memcache if entity already queried
+	'''
+	def get(self):
+
+		keyArray = self.request.headers["key"].split(",")
+		key = ndb.Key(keyArray[0], int(keyArray[1]))
+
+		entity = key.get()
+
+		if entity:
+			self.response.write(json.dumps(ndb_Model_to_Dict(entity)))
+		else:
+			self.response.write(None)
+
 
 app = webapp2.WSGIApplication(
 		[webapp2.Route("/home", handler=Home, name="index"),
@@ -1240,7 +1257,9 @@ app = webapp2.WSGIApplication(
 		 webapp2.Route("/gem/edit/<id>", handler=EditGem, name="editgem"),
 		 webapp2.Route("/gem/new", handler=NewGem, name="newgem"),
 		 webapp2.Route("/GetGems", handler=GetGems, name="getgems"),
-		 webapp2.Route("/GetLocales", handler=GetLocales, name="getlocales")],
+		 webapp2.Route("/GetLocales", handler=GetLocales, name="getlocales"),
+		 webapp2.Route("/GetByKey", handler=GetInstanceByKey, 
+		 	name="getinstancebykey")],
 		debug=True)
 
 

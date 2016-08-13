@@ -15,25 +15,16 @@
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
 
-	<!-- selected options section -->
-	<div class="infodiv">
-		<div id="wikidiv">
-		</div>
-		<div id="selectedimgdiv">
-			<img id="selectedgemimg" src="" alt="[pic of water station]" data-bind="src: selectedGemPic">
-		</div>
-	</div>
-
 	<!-- menu bar with filtering/selection -->
 	<div class="outerdiv" id="menubar">
 		<div class="locationselect" id="countrydiv">
 			<select id="countryselect" data-bind="options: countries, optionsCaption: '-Select Country-', optionsText: 'name', value: selectedCountry"></select>
 		</div>
 		<div class="locationselect" id="citydiv">
-			<select id="cityselect" data-bind="options: cities, optionsCaption: '-Select City-', optionsText: 'name', value: selectedCity"></select>
+			<select id="cityselect" data-bind="options: optionCities, optionsCaption: '-Select City-', optionsText: 'name', value: selectedCity"></select>
 		</div>
 		<div class="locationselect" id="neighborhooddiv">
-			<select id="neighborhoodselect" data-bind="options: neighborhoods, optionsCaption: '-Select Neighborhood-', optionsText: 'name', value: selectedNeighborhood"></select>
+			<select id="neighborhoodselect" data-bind="options: optionNeighborhoods, optionsCaption: '-Select Neighborhood-', optionsText: 'name', value: selectedNeighborhood"></select>
 		</div>
 	</div>
 	<!-- end filtering/seletion -->
@@ -44,6 +35,20 @@
     	</div>
 	</div>
 	<!-- end google map -->
+
+	<!-- selected info section -->
+	<div id="infodiv">
+		<div id="selectedlocationdiv">
+			<h4>Selected Location Info</h4>
+		</div>
+		<div id="selectedgemdiv">
+			<h4>Selected Gem Info</h4>
+			<div id="selectedimgdiv">
+				<img id="selectedgemimg" src="" alt="[pic of water station]" data-bind="src: selectedGemPic">
+			</div>
+		</div>
+	</div>
+	<!-- end selected info section -->
 
 {% endblock %}
 
