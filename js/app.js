@@ -18,6 +18,15 @@ window.onresize = function(event) {
 
 /*
 *
+*	Global Google Map API vars that need to be accessed by the rest of the program
+*
+*/
+
+var map;
+var infoWindow;
+
+/*
+*
 *	Models
 *
 */
@@ -34,10 +43,30 @@ var User = function (data) {
 }
 */
 
+var Marker = function (data) {
+	// a marker is a google map marker that holds a gem object
+
+	console.log("creating marker");
+	console.log(data["location"]());
+	var coords = data["location"]().split(",");
+	console.log(parseFloat(coords[0]));
+	console.log(coords[1]);
+
+	self.data = data;
+	self.marker = new google.maps.Marker({
+
+		position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
+		map: map,
+		title: data["name"]
+	});
+	console.log(self.marker);
+}
+
 var Gem = function (data) {
 
 	var self = this;
 
+	self.name = "Gem (water station)";
 	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
 	self.neighborhood = ko.observable(data["neighborhood"]);
@@ -49,7 +78,7 @@ var Gem = function (data) {
 	self.company = ko.observable(data["company"]);
 	self.notes = ko.observable(data["notes"]);
 	self.gemfinder = ko.observable(data["gemfinder"]);
-	self.gemusers = observableArray(data["gemusers"]);
+	self.gemusers = ko.observableArray(data["gemusers"]);
 }
 
 var Country = function (data) {
@@ -68,7 +97,7 @@ var City = function (data) {
 	self.key = ko.observable(data["key"]);
 	self.name = ko.observable(data["name"]);
 	self.country = ko.observable(data["country"]);
-	self.Neighborhoods = ko.observableArray(data["neighborhoods"]);
+	self.neighborhoods = ko.observableArray(data["neighborhoods"]);
 }
 
 var Neighborhood = function (data) {
@@ -90,31 +119,36 @@ var ViewModel = function () {
 
 	var self = this;
 
-	// arrays hold all of type seen in this session
-	self.countries = ko.observableArray([]);
-	self.cities = ko.observableArray([]);
-	self.neighborhoods = ko.observableArray([]);
-	self.gems = ko.observableArray([]);
+	// hashmaps to keep track of which objects have already been created in client memory
+	// allows O(1) check instead of looping through observable arrays
+	// when possible, push from here to observables instead of requesting from server
+	self.loadedCountries = {};
+	self.loadedCities = {};
+	self.loadedNeighborhoods = {};
+	self.loadedGems = {};
 
-	// holds user selections
+	// track current user selections
 	self.selectedGem = ko.observable();
 	self.selectedGemPic = ko.observable();
 	self.selectedNeighborhood = ko.observable();
 	self.selectedCity = ko.observable();
 	self.selectedCountry = ko.observable();
 
-	// narrow options based on selections
+	// displayed options
+	self.optionCountries = ko.observableArray([]);
 	self.optionCities = ko.observableArray([]);
 	self.optionNeighborhoods = ko.observableArray([]);
-	self.optionGems = ko.observableArray([]);
 
-	/* Do stuff when selections change 
+	// holds Markers (with data as gem and marker as google api marker)
+	self.displayedGems = [];
+
+	/* Custom listeners for selection changes
 	*/
 	self.selectedCountry.subscribe(function(newSelection) {
 
     	self.filterCities();
     	self.resetOptions("neighborhood");
-    	self.resetOptions("gem");
+    	self.destroyDisplayedGems();
     	// center map
     	// display info about country
 	});
@@ -122,7 +156,6 @@ var ViewModel = function () {
 	self.selectedCity.subscribe(function(newSelection) {
 
 		self.filterNeighborhoods();
-    	self.filterGems();
     	// center map
     	// show selected city gems
     	// display info about city
@@ -130,36 +163,11 @@ var ViewModel = function () {
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
-    	self.filterGems();
-
-    	if (!self.selectedGem()) {
-    		// triggered by selecting neighborhood
-
-	      	// center map on neighborhood, hopefully showing boundaries
-	    	// show selected neighborhood gems
-	    	// display info about neighborhood  		
-	    }
-	    else {
-	    	// triggered by 
-	    	// hopefully show neighborhood boundaries
-	    }
+    	self.displayGems(newSelection["key"]());
+    	// center map
+    	// show selected neighborhood gems
+    	// display info about neighborhood (should be observable) 	
 	});	
-
-	self.resetOptions = function (selectionType) {
-
-		if (selectionType == "city") {
-
-			self.optionCities.removeAll();
-		}
-		else if (selectionType == "neighborhood") {
-
-			self.optionNeighborhoods.removeAll();
-		}
-		else if (selectionType == "gem") {
-
-			self.optionGems.removeAll();
-		}
-	}
 
 	self.selectedGem.subscribe(function(newSelection) {
 
@@ -172,6 +180,18 @@ var ViewModel = function () {
 			// display info about gem
 		}
 	});
+
+	self.resetOptions = function (selectionType) {
+
+		if (selectionType == "city") {
+
+			self.optionCities.removeAll();
+		}
+		else if (selectionType == "neighborhood") {
+
+			self.optionNeighborhoods.removeAll();
+		}
+	}
 
 	self.selectGem = function (selectedGem) {
 
@@ -186,95 +206,158 @@ var ViewModel = function () {
 		}
 	};
 
+	// maybe i could pass a singular ajax call a callback function instead of re-typing?
+	// could also map country -> list of cityobj to make this simpler
+	// (also for cities -> neighborhoods etc)
+
 	self.filterCities = function () {
-		// filter cities by getting country from datastore and seeing
-		// if it matches the selected country
+		// filter cities by populating select options from selected country city keys
+		// if city has not been loaded into client memory, load from server
 		self.resetOptions("city");
+		self.resetOptions("neighborhood");
+		self.destroyDisplayedGems();
 
-		for (var i = 0; i < self.cities().length; i++) {
+		var cityKeyList = self.selectedCountry().cities();
 
-			var thisCity = self.cities()[i];
-			var thisCityCountryKey = self.cities()[i].country();
-			var currentCountryName = self.selectedCountry().name();
+		for (var i = 0; i < cityKeyList.length; i++) {
 
-			// to preserve current city and country in for loop
-			(function(thisCity, thisCityCountryKey, currentCountryName) {
+			var thisCityKey = cityKeyList[i];
+			console.log("this key is ");
+			console.log(thisCityKey);
 
-				$.ajax({
-					type: "GET",
-					url: "/GetByKey",
-					headers: {"key":thisCityCountryKey}
-				}).done(function(data) {
-					
-					var dataJSON = JSON.parse(data);
+			if (thisCityKey in self.loadedCities) {
 
-					if (dataJSON["name"] == self.selectedCountry().name()) {
+				console.log("it was already loaded");
+				self.optionCities.push(self.loadedCities[thisCityKey]);
+			}
+			else {
 
+				(function(thisCityKey) {
+
+					$.ajax({
+						type: "GET",
+						url: "/GetByKey",
+						headers: {"key":thisCityKey}
+					}).done(function(data) {
+						
+						var dataJSON = JSON.parse(data);
+						// add city to loaded cities add to options
+						var thisCity = new City(dataJSON);
+						self.loadedCities[thisCityKey] = thisCity;
 						self.optionCities.push(thisCity);
-					}
-				});
-			})(thisCity, thisCityCountryKey, currentCountryName);
+					});
+				})(thisCityKey);
+			}
 		}
 	};
-
-	// maybe i could pass a singular ajax call a callback function instead of re-typing?
 
 	self.filterNeighborhoods = function () {
-		// filter neighborhoods by getting city from datastore and seeing
-		// if it matches the selected city
+		// filter neighborhoods by populating select options from selected city neighborhood keys
+		// if neighborhood has not been loaded into client memory, load from server
 		self.resetOptions("neighborhood");
+		self.destroyDisplayedGems();
 
-		for (var i = 0; i < self.neighborhoods().length; i++) {
+		var neighborhoodKeyList = self.selectedCity().neighborhoods();
 
-			$.ajax({
-				type: "GET",
-				url: "/GetByKey",
-				headers: {"key":self.neighborhoods()[i]["key"]}
-			}).done(function(data) {
-				
-				var dataJSON = JSON.parse(data);
+		for (var i = 0; i < neighborhoodKeyList.length; i++) {
 
-				if (dataJSON["name"] == self.selectedCity().name) {
+			var thisNeighborhoodKey = neighborhoodKeyList[i];
 
-					self.optionNeighborhoods().push(self.neighborhoods()[i]);
-				}
-			});
+			if (thisNeighborhoodKey in self.loadedNeighborhoods) {
+
+				self.optionNeighborhoods.push(self.loadedNeighborhoods[thisNeighborhoodKey]);
+				self.displayGems(thisNeighborhoodKey);
+			}
+			else {
+	
+				(function(thisNeighborhoodKey) {
+
+					$.ajax({
+						type: "GET",
+						url: "/GetByKey",
+						headers: {"key":thisNeighborhoodKey}
+					}).done(function(data) {
+						
+						var dataJSON = JSON.parse(data);
+						// add neighborhood to loaded neighborhoods, add to options, then display gems
+						var thisNeighborhood = new Neighborhood(dataJSON);
+						self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
+						self.optionNeighborhoods.push(thisNeighborhood);
+						self.displayGems(thisNeighborhoodKey);
+					});
+				})(thisNeighborhoodKey);
+			}
 		}
 	};
 
-	self.filterGems = function () {
-		// filter gems by getting city from datastore and seeing
-		// if it matches the selected city
-		self.resetOptions("gem");
+	self.displayGems = function (neighborhoodKey) {
+		// add gems to display from a particular neighborhood by key
+		var thisNeighborhoodGemKeys = self.loadedNeighborhoods[neighborhoodKey].gems();
+		var thisGemKey;
+		var thisGem;
 
-		for (var i = 0; i < self.gems().length; i++) {
+		console.log("displaying for ");
+		console.log(neighborhoodKey);
 
-			// nested because gems store key to neighborhood, neighborhood stores key to city
-			$.ajax({
-				type: "GET",
-				url: "/GetByKey",
-				headers: {"key":self.gems()[i]["key"]}
-			}).done(function(data) {
-				
-				var neighborhoodDataJSON = JSON.parse(data);
+		console.log(thisNeighborhoodGemKeys);
 
-				$.ajax({
-					type: "GET",
-					url: "/GetByKey",
-					headers: {"key":neighborhoodDataJSON["key"]}
-				}).done(function(data) {
-					
-					if (dataJSON["name"] == self.selectedCity().name) {
+		for (var i = 0; i < thisNeighborhoodGemKeys.length; i++) {
 
-						var cityDataJSON = JSON.parse(data);
-						self.optionGems().push(self.gems()[i]);
-					}
-				});
-			});
+			thisGemKey = thisNeighborhoodGemKeys[i];
+			console.log("this gem ");
+
+			if (self.loadedGems[thisGemKey]) {
+
+				console.log("was already loaded");
+				thisGem = self.loadedGems[thisGemKey];
+				// cant put this after if because need to do it inside async ajax call below
+				var thisGemMarker = new Marker(self.gems()[i]);
+				self.displayedGems.push(thisGemMarker);
+			}
+			else {
+
+				console.log("needs to be created");
+				(function(thisGemKey) {
+
+					$.ajax({
+						type: "GET",
+						url: "/GetByKey",
+						headers: {"key":thisGemKey}
+					}).done(function(data) {
+						
+						var dataJSON = JSON.parse(data);
+						// add gem to loaded gems, then to displayed gems
+						var newGem = new Gem(dataJSON);
+						self.loadedGems[newGem["key"]()] = newGem;
+						var thisGemMarker = new Marker(newGem);
+						self.displayedGems.push(thisGemMarker);
+						console.log("finished creating and displaying gem ");
+					});
+				})(thisGemKey);
+			}
 		}
 	};
 
+	self.destroyDisplayedGems = function () {
 
+		/*
+
+
+
+		revise because it should iterate over properties
+
+		*/
+		for (var i = 0; i < self.displayedGems.length; i++) {
+
+			self.displayedGems[i].marker.setMap(null);
+			self.displayedGems[i].marker = null;
+			self.displayedGems[i].data = null;
+		}
+
+		self.displayedGems = [];
+		// now no references to my Marker object or the related google map Marker object
+		// are stored anywhere, so will be destroyed
+	}
 
 	self.resetSelectedCity = function () {
 
@@ -296,97 +379,29 @@ var ViewModel = function () {
 
 	};
 
-	self.getCountry = function (countryName) {
-		// get country from list of countries by name
-
-		for (var i = 0; i < self.countries.length; i++) {
-
-			if (self.countries[i]().name() == countryName) {
-
-				return self.countries[i];
-			}
-		}
-
-		return null;
-	};
-
-	self.getCity = function (cityName) {
-		// get city from list of cities by name
-
-		for (var i = 0; i < self.cities.length; i++) {
-
-			if (self.cities[i]().name() == cityName) {
-
-				return self.cities[i];
-			}
-		}
-
-		return null;		
-	};
-
-	self.getNeighborhood = function (neighborhoodName) {
-		// get city from list of cities by name
-
-		for (var i = 0; i < self.neighborhoods.length; i++) {
-
-			if (self.neighborhoods[i]().name() == neighborhoodName) {
-
-				return self.neighborhoods[i];
-			}
-		}
-
-		return null;
-	};
-
-	self.getGem = function (location) {
-		// get gem from list of gems by location
-
-		for (var i = 0; i < self.gems.length; i++) {
-
-			if (self.gems[i].location() == location) {
-
-				return self.gems[i];
-			}
-		}
-
-		return null;			
-	};
-
 	self.populateCountries = function (countriesJSON) {
-
-		self.countries.removeAll();
 
 		for (var i = 0; i < countriesJSON.length; i++) {
 		
 			country = new Country(countriesJSON[i]);
-			self.countries.push(country);
+			self.loadedCountries[country["key"]()] = country;
+			self.optionCountries.push(country);
 		}
 	};
 
 	self.populateCities = function (citiesJSON) {
 
-		self.cities.removeAll();
-
 		for (var i = 0; i < citiesJSON.length; i++) {
 		
 			city = new City(citiesJSON[i]);
-			self.cities.push(city);
-		}
-	};
-
-	self.populateNeighborhoods = function (neighborhoodsJSON) {
-
-		self.neighborhoods.removeAll();
-
-		for (var i = 0; i < neighborhoodsJSON.length; i++) {
-		
-			neighborhood = new Neighborhood(neighborhoodsJSON[i]);
-			self.neighborhoods.push(neighborhood);
+			self.loadedCities[city["key"]()] = city;
+			self.optionCities.push(city);
 		}
 	};
 
 	self.populateLocale = function(kind, pythonDictParamString) {
-		// ajax query to server for locales (e.g., countries, cities)
+		// ajax query to server for initial select options locales (e.g., countries, cities)
+		// if have many more countries, mofify to only populate cities by country select
 		$.ajax({
 			type: "GET",
 			url: "/GetLocales",
@@ -403,21 +418,6 @@ var ViewModel = function () {
 
 				self.populateCities(dataJSON);
 			}
-			else if (kind == "neighborhood") {
-
-				self.populateNeighborhoods(dataJSON);
-			}
-		});
-	};
-
-	self.populateGems = function(neighborhoodKey) {
-
-		$.ajax({
-			type: "GET",
-			url: "/GetGems"
-		}).done(function(data) {
-
-			var dataJSON = JSON.parse(data);
 		});
 	};
 
@@ -439,14 +439,14 @@ var ViewModel = function () {
 // embed the Google Map
 function initMap() {
 
-	var map = new google.maps.Map(document.getElementById('googlemap'), {
+	map = new google.maps.Map(document.getElementById('googlemap'), {
 	  	
 	  	center: {lat: 18.7061, lng: 98.9817},
 	  	scrollwheel: false,
 	  	zoom: 13
 	});
 
-	var infoWindow = new google.maps.InfoWindow({map: map});
+	infoWindow = new google.maps.InfoWindow({map: map});
 
 	// Try HTML5 geolocation.
     if (navigator.geolocation) {

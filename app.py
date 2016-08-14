@@ -610,10 +610,13 @@ def ndb_Model_to_Dict(modelInstance):
 					for keyModelInstance in thisKeyProperty:
 						# guard against nones
 						if keyModelInstance:
+							thisKeyArray = []
 							keyKind = keyModelInstance.kind()
 							keyId = keyModelInstance.id()
-							serializedKeyProperty.append(keyKind)
-							serializedKeyProperty.append(keyId)
+							thisKeyArray.append(keyKind)
+							thisKeyArray.append(keyId)
+							serializedKeyProperty.append(thisKeyArray)
+
 				else:
 					# guard against nones
 					if thisKeyProperty:
@@ -1237,6 +1240,7 @@ class GetInstanceByKey(Handler):
 	def get(self):
 
 		keyArray = self.request.headers["key"].split(",")
+
 		key = ndb.Key(keyArray[0], int(keyArray[1]))
 
 		entity = key.get()
