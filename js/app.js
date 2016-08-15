@@ -24,6 +24,8 @@ window.onresize = function(event) {
 
 var map;
 var infoWindow;
+var directionsService;
+var directionsDisplay;
 
 /*
 *
@@ -54,8 +56,24 @@ var Marker = function (data) {
 
 		position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
 		map: map,
+		animation: google.maps.Animation.DROP,
 		title: data["name"]
 	});
+
+	self.marker.toggleBounce = function () {
+
+		if (self.marker.getAnimation() != google.maps.Animation.BOUNCE) {
+
+			self.marker.setAnimation(google.maps.Animation.BOUNCE);
+			setTimeout(self.marker.toggleBounce, 2500);
+		}
+		else {
+
+			self.marker.setAnimation(null);
+		}
+	};
+
+	self.marker.addListener("click", self.marker.toggleBounce);
 }
 
 var Gem = function (data) {
@@ -166,10 +184,9 @@ var ViewModel = function () {
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
-    	self.displayGems(newSelection["key"]());
+    	if (newSelection && !self.selectedGem()) {
 
-    	if (newSelection) {
-
+    		self.displayGems(newSelection["key"]());
     		// center map / show outline of neighborhood
     		// display info about neighborhood
     	}
@@ -180,7 +197,7 @@ var ViewModel = function () {
 		if (newSelection) {
 
 			// setSelectedNeighborhood without triggering other stuff
-			// animate gem
+			newSeletion["marker"].animaton = google.maps.Animation.BOUNCE;
 			// display info about neighborhood
 			// display info about gem in infowindow
 		}
@@ -441,6 +458,8 @@ function initMap() {
 	  	zoom: 13
 	});
 
+    directionsService = new google.maps.DirectionsService;
+    directionsDisplay = new google.maps.DirectionsRenderer;
 	infoWindow = new google.maps.InfoWindow({map: map});
 
 	// Try HTML5 geolocation.
@@ -465,6 +484,8 @@ function initMap() {
     	// Browser doesn't support Geolocation
       	handleLocationError(false, infoWindow, map.getCenter());
     }
+
+    directionsDisplay.setMap(map);
 }
 
 function handleLocationError(browserHasGeolocation, infoWindow, pos) {
@@ -475,29 +496,24 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
                       'Error: Your browser doesn\'t support geolocation.');
 }
 
-// pass google map to this function and make it an onclick?
-function showDirections(destination, origin, travelMode, googleMap) {
+// show directions from current location to selected marker
+function showDirections(destination, origin, travelMode) {
 
-    var directionsDisplay = new google.maps.DirectionsRenderer({
-      	map: googleMap
-    });
-
-    // Set destination, origin and travel mode.
     var request = {
       	destination: destination,
       	origin: origin,
       	travelMode: travelMode
     };
 
-    // Pass the directions request to the directions service.
-    var directionsService = new google.maps.DirectionsService();
-
     directionsService.route(request, function(response, status) {
 
-      	if (status == 'OK') {
-        	// Display the route on the map.
-        	directionsDisplay.setDirections(response);
-      	}
+		if (status === 'OK') {
+
+			directionsDisplay.setDirections(response);
+		} else {
+
+			window.alert('Directions request failed due to ' + status);
+		}
     });
 }
 
