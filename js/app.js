@@ -50,41 +50,30 @@ var Marker = function (data) {
 	var self = this;
 
 	var coords = data["location"]().split(",");
+	console.log(data["name"]());
 
-	self.data = data;
+	self.gemKey = data["key"]();
 	self.marker = new google.maps.Marker({
 
 		position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
 		map: map,
 		animation: google.maps.Animation.DROP,
-		title: data["name"]
+		title: data["name"]()
 	});
-
-	self.marker.toggleBounce = function () {
-
-		if (self.marker.getAnimation() != google.maps.Animation.BOUNCE) {
-
-			self.marker.setAnimation(google.maps.Animation.BOUNCE);
-			setTimeout(self.marker.toggleBounce, 2500);
-		}
-		else {
-
-			self.marker.setAnimation(null);
-		}
-	};
-
-	self.marker.addListener("click", self.marker.toggleBounce);
 }
 
 var Gem = function (data) {
 
 	var self = this;
 
-	self.name = "Gem (water station)";
+	self.name = ko.observable("Gem (water refill)");
 	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
 	self.neighborhood = ko.observable(data["neighborhood"]);
+	self.neighborhoodName = ko.observable(data["neighborhoodName"]);
 	self.picture = ko.observable(data["picture"]);
+	// picture stored ready for display as 'src' attribute in html <img> tag
+	self.pictureSRC = ko.observable("data:image;base64,"+data["picture"]);
 	self.prices = ko.observableArray(data["price"]);
 	self.uv = ko.observable(data["uv"]);
 	self.ozone = ko.observable(data["ozone"]);
@@ -143,7 +132,6 @@ var ViewModel = function () {
 
 	// track current user selections
 	self.selectedGem = ko.observable();
-	self.selectedGemPic = ko.observable();
 	self.selectedNeighborhood = ko.observable();
 	self.selectedCity = ko.observable();
 	self.selectedCountry = ko.observable();
@@ -154,7 +142,7 @@ var ViewModel = function () {
 	self.optionNeighborhoods = ko.observableArray([]);
 
 	// holds Markers (with data as gem and marker as google api marker)
-	self.displayedGems = [];
+	self.displayedGemMarkers = ko.observableArray([]);
 
 	/* Custom listeners for selection changes
 	*/
@@ -162,7 +150,7 @@ var ViewModel = function () {
 
     	self.filterCities();
     	self.resetOptions("neighborhood");
-    	self.destroyDisplayedGems();
+    	self.destroyDisplayedGemMarkers();
 
     	if (newSelection) {
 
@@ -192,17 +180,6 @@ var ViewModel = function () {
     	}
 	});	
 
-	self.selectedGem.subscribe(function(newSelection) {
-
-		if (newSelection) {
-
-			// setSelectedNeighborhood without triggering other stuff
-			newSeletion["marker"].animaton = google.maps.Animation.BOUNCE;
-			// display info about neighborhood
-			// display info about gem in infowindow
-		}
-	});
-
 	/* Modify options based on selections
 	*/
 
@@ -218,19 +195,6 @@ var ViewModel = function () {
 		}
 	}
 
-	self.selectGem = function (selectedGem) {
-
-		if (selectedGem != self.selectedGem()) {
-
-			self.selectedGem(selectedGem);
-			self.animateGem(self.selectedGem);
-
-			var thisPicSrc = "data:image;base64," + dataJSON[0].picture;
-
-			$("#imgtest").attr("src", thisPicSrc);
-		}
-	};
-
 	// maybe i could pass a singular ajax call a callback function instead of re-typing?
 	// could also map country -> list of cityobj to make this simpler
 	// (also for cities -> neighborhoods etc)
@@ -240,7 +204,7 @@ var ViewModel = function () {
 		// if city has not been loaded into client memory, load from server
 		self.resetOptions("city");
 		self.resetOptions("neighborhood");
-		self.destroyDisplayedGems();
+		self.destroyDisplayedGemMarkers();
 
 		if (self.selectedCountry()) {
 
@@ -267,8 +231,8 @@ var ViewModel = function () {
 							var dataJSON = JSON.parse(data);
 							// add city to loaded cities add to options
 							var thisCity = new City(dataJSON);
-							console.log(thisCity);
 							self.loadedCities[thisCityKey] = thisCity;
+							console.log(thisCity);
 							self.optionCities.push(thisCity);
 						});
 					})(thisCityKey);
@@ -281,7 +245,9 @@ var ViewModel = function () {
 		// filter neighborhoods by populating select options from selected city neighborhood keys
 		// if neighborhood has not been loaded into client memory, load from server
 		self.resetOptions("neighborhood");
-		self.destroyDisplayedGems();
+		self.destroyDisplayedGemMarkers();
+
+		// st bool for "came from user selection"?
 
 		if (self.selectedCity()) {
 
@@ -333,8 +299,9 @@ var ViewModel = function () {
 
 				thisGem = self.loadedGems[thisGemKey];
 				// cant put this after if because need to do it inside async ajax call below
-				var thisGemMarker = new Marker(thisGem);
-				self.displayedGems.push(thisGemMarker);
+				var thisGemMarker = new Marker(thisGem, self.loadedNeighborhoods[neighborhoodKey]["name"]);
+				//thisGemMarker.marker.addListener("click", self.toggleGemMarker);
+				self.displayedGemMarkers.push(thisGemMarker);
 			}
 			else {
 
@@ -347,50 +314,37 @@ var ViewModel = function () {
 					}).done(function(data) {
 						
 						var dataJSON = JSON.parse(data);
+						dataJSON["neighborhoodName"] = self.loadedNeighborhoods[neighborhoodKey].name();
 						// add gem to loaded gems, then to displayed gems
 						var newGem = new Gem(dataJSON);
 						self.loadedGems[newGem["key"]()] = newGem;
 						var thisGemMarker = new Marker(newGem);
-						self.displayedGems.push(thisGemMarker);
+						thisGemMarker.marker.addListener("click", 
+							function(gemMarker) {
+								 
+								return function() {self.toggleGemMarker(gemMarker)};
+							}(thisGemMarker)
+						);
+						self.displayedGemMarkers.push(thisGemMarker);
 					});
 				})(thisGemKey);
 			}
 		}
 	};
 
-	self.destroyDisplayedGems = function () {
+	self.destroyDisplayedGemMarkers = function () {
 
-		for (var i = 0; i < self.displayedGems.length; i++) {
+		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
 
-			self.displayedGems[i].marker.setMap(null);
-			self.displayedGems[i].marker = null;
-			self.displayedGems[i].data = null;
+			self.displayedGemMarkers()[i].marker.setMap(null);
+			self.displayedGemMarkers()[i].marker = null;
+			self.displayedGemMarkers()[i].data = null;
 		}
 
-		self.displayedGems = [];
+		self.displayedGemMarkers.removeAll();
 		// now no references to my Marker object or the related google map Marker object
 		// are stored anywhere, so will be destroyed
 	}
-
-	self.resetSelectedCity = function () {
-
-		$("#cityselect").val("-1");
-	};
-
-	self.resetSelectedNeighborhood = function () {
-
-		$("#neighborhoodselect").val("-1");
-	};
-
-	self.resetSelectedGem = function () {
-
-		$("#gemselect").val("-1");
-	};
-
-	self.animateGem = function (gem) {
-
-
-	};
 
 	self.populateCountries = function (countriesJSON) {
 
@@ -398,6 +352,7 @@ var ViewModel = function () {
 		
 			country = new Country(countriesJSON[i]);
 			self.loadedCountries[country["key"]()] = country;
+			console.log(country);
 			self.optionCountries.push(country);
 		}
 	};
@@ -432,6 +387,28 @@ var ViewModel = function () {
 				self.populateCities(dataJSON);
 			}
 		});
+	};
+
+	self.toggleGemMarker = function (gemMarker) {
+		// set selected gem and infowindo html, and toggle animation	
+		var thisGem = self.loadedGems[gemMarker.gemKey];
+		self.selectedGem(thisGem);
+		console.log(self.selectedGem().location());
+
+    	infoWindow.close();
+    	infoWindow.open(map, gemMarker.marker);
+
+    	// clone node, remove class display none and change id
+    	// or else only one info window will ever appear because the div is destroyed
+    	var info = document.getElementById("geminfowindowselector");
+    	var clone = info.cloneNode(true);
+    	clone.id = "realwindow";
+    	clone.className = "";
+
+    	infoWindow.setContent(clone);
+
+		gemMarker.marker.setAnimation(google.maps.Animation.BOUNCE);
+		setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
 	};
 
 	// initialize country and city selects when app starts

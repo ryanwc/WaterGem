@@ -62,19 +62,34 @@ a {
 	overflow: scroll;
 }
 
-#selectedlocationdiv h4 {
+.geminfowindowdiv {
 
-	text-align: center;
+	width: 300px;
+	overflow: scroll;
 }
 
-#selectedgemdiv h4 {
+.geminfowindowdiv {
 
-	height: 100px;
-	text-align: center;
+	text-align: left;
 }
 
-#selectedgemimgdiv {
+.geminfowindowtextdiv {
 
+}
+
+.geminfowindowimgdiv {
+
+}
+
+.geminfowindowimg {
+
+	max-width: 150px;
+	max-height: 150px;
+}
+
+.geminfowindowheader {
+
+	font-weight: bold;
 }
 
 #googlemapdiv {
@@ -94,5 +109,9 @@ a {
 
 @media screen and (max-width: 499px) {
 
+}
+
+.displaynone {
+	display: none !important;
 }
 

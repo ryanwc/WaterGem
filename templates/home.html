@@ -36,16 +36,43 @@
 	</div>
 	<!-- end google map -->
 
+	<!-- info window section -->
+	<div class="displaynone" id="geminfowindowselector">
+
+		<div class="geminfowindow" data-bind="with: selectedGem">
+
+			<span class="geminfowindowheader" data-bind="text: name"></span>
+
+			<div class="geminfowindowtextdiv">
+				<span>Area: <span data-bind="text: neighborhoodName"></span></span>
+				<br>
+	    		<!-- ko if: uv -->
+				<span>Labeled UV</span>
+				<br>
+				<!-- /ko -->
+				<!-- ko if: ozone -->
+				<span>Labeled ozone</span>
+				<br>
+				<!-- /ko -->
+				<span>Notes: <span data-bind="text: notes"></span></span>
+				<!-- ko if: !picture -->
+				<span>No picture yet.</span>	
+				<!-- /ko -->
+			</div>
+			<div class="geminfowindowimgdiv">
+	    		<!-- ko if: picture -->
+				<img class="geminfowindowimg" data-bind="attr: {src: pictureSRC}" alt="[water station pic]">
+				<!-- /ko -->		
+			</div>
+
+		</div>
+
+	</div>
+
 	<!-- selected info section -->
 	<div id="infodiv">
 		<div id="selectedlocationdiv">
 			<h4>Selected Location Info</h4>
-		</div>
-		<div id="selectedgemdiv">
-			<h4>Selected Gem Info</h4>
-			<div id="selectedimgdiv">
-				<img id="selectedgemimg" src="" alt="[pic of water station]" data-bind="src: selectedGemPic">
-			</div>
 		</div>
 	</div>
 	<!-- end selected info section -->
