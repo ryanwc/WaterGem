@@ -45,12 +45,9 @@ var User = function (data) {
 
 var Marker = function (data) {
 	// a marker is a google map marker that holds a gem object
+	var self = this;
 
-	console.log("creating marker");
-	console.log(data["location"]());
 	var coords = data["location"]().split(",");
-	console.log(parseFloat(coords[0]));
-	console.log(coords[1]);
 
 	self.data = data;
 	self.marker = new google.maps.Marker({
@@ -59,7 +56,6 @@ var Marker = function (data) {
 		map: map,
 		title: data["name"]
 	});
-	console.log(self.marker);
 }
 
 var Gem = function (data) {
@@ -149,37 +145,49 @@ var ViewModel = function () {
     	self.filterCities();
     	self.resetOptions("neighborhood");
     	self.destroyDisplayedGems();
-    	// center map
-    	// display info about country
+
+    	if (newSelection) {
+
+    		// center map
+    		// display info about country
+    	}
 	});
 
 	self.selectedCity.subscribe(function(newSelection) {
 
 		self.filterNeighborhoods();
-    	// center map
-    	// show selected city gems
-    	// display info about city
+
+		if (newSelection) {
+
+    		// center map
+    		// display info about city
+		}
 	});
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
     	self.displayGems(newSelection["key"]());
-    	// center map
-    	// show selected neighborhood gems
-    	// display info about neighborhood (should be observable) 	
+
+    	if (newSelection) {
+
+    		// center map / show outline of neighborhood
+    		// display info about neighborhood
+    	}
 	});	
 
 	self.selectedGem.subscribe(function(newSelection) {
 
 		if (newSelection) {
 
-			// setSelectedNeighborhood
-			// center map on gem
+			// setSelectedNeighborhood without triggering other stuff
 			// animate gem
 			// display info about neighborhood
-			// display info about gem
+			// display info about gem in infowindow
 		}
 	});
+
+	/* Modify options based on selections
+	*/
 
 	self.resetOptions = function (selectionType) {
 
@@ -217,36 +225,37 @@ var ViewModel = function () {
 		self.resetOptions("neighborhood");
 		self.destroyDisplayedGems();
 
-		var cityKeyList = self.selectedCountry().cities();
+		if (self.selectedCountry()) {
 
-		for (var i = 0; i < cityKeyList.length; i++) {
+			var cityKeyList = self.selectedCountry().cities();
 
-			var thisCityKey = cityKeyList[i];
-			console.log("this key is ");
-			console.log(thisCityKey);
+			for (var i = 0; i < cityKeyList.length; i++) {
 
-			if (thisCityKey in self.loadedCities) {
+				var thisCityKey = cityKeyList[i];
 
-				console.log("it was already loaded");
-				self.optionCities.push(self.loadedCities[thisCityKey]);
-			}
-			else {
+				if (thisCityKey in self.loadedCities) {
 
-				(function(thisCityKey) {
+					self.optionCities.push(self.loadedCities[thisCityKey]);
+				}
+				else {
 
-					$.ajax({
-						type: "GET",
-						url: "/GetByKey",
-						headers: {"key":thisCityKey}
-					}).done(function(data) {
-						
-						var dataJSON = JSON.parse(data);
-						// add city to loaded cities add to options
-						var thisCity = new City(dataJSON);
-						self.loadedCities[thisCityKey] = thisCity;
-						self.optionCities.push(thisCity);
-					});
-				})(thisCityKey);
+					(function(thisCityKey) {
+
+						$.ajax({
+							type: "GET",
+							url: "/GetByKey",
+							headers: {"key":thisCityKey}
+						}).done(function(data) {
+							
+							var dataJSON = JSON.parse(data);
+							// add city to loaded cities add to options
+							var thisCity = new City(dataJSON);
+							console.log(thisCity);
+							self.loadedCities[thisCityKey] = thisCity;
+							self.optionCities.push(thisCity);
+						});
+					})(thisCityKey);
+				}
 			}
 		}
 	};
@@ -257,35 +266,38 @@ var ViewModel = function () {
 		self.resetOptions("neighborhood");
 		self.destroyDisplayedGems();
 
-		var neighborhoodKeyList = self.selectedCity().neighborhoods();
+		if (self.selectedCity()) {
 
-		for (var i = 0; i < neighborhoodKeyList.length; i++) {
+			var neighborhoodKeyList = self.selectedCity().neighborhoods();
 
-			var thisNeighborhoodKey = neighborhoodKeyList[i];
+			for (var i = 0; i < neighborhoodKeyList.length; i++) {
 
-			if (thisNeighborhoodKey in self.loadedNeighborhoods) {
+				var thisNeighborhoodKey = neighborhoodKeyList[i];
 
-				self.optionNeighborhoods.push(self.loadedNeighborhoods[thisNeighborhoodKey]);
-				self.displayGems(thisNeighborhoodKey);
-			}
-			else {
-	
-				(function(thisNeighborhoodKey) {
+				if (thisNeighborhoodKey in self.loadedNeighborhoods) {
 
-					$.ajax({
-						type: "GET",
-						url: "/GetByKey",
-						headers: {"key":thisNeighborhoodKey}
-					}).done(function(data) {
-						
-						var dataJSON = JSON.parse(data);
-						// add neighborhood to loaded neighborhoods, add to options, then display gems
-						var thisNeighborhood = new Neighborhood(dataJSON);
-						self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
-						self.optionNeighborhoods.push(thisNeighborhood);
-						self.displayGems(thisNeighborhoodKey);
-					});
-				})(thisNeighborhoodKey);
+					self.optionNeighborhoods.push(self.loadedNeighborhoods[thisNeighborhoodKey]);
+					self.displayGems(thisNeighborhoodKey);
+				}
+				else {
+		
+					(function(thisNeighborhoodKey) {
+
+						$.ajax({
+							type: "GET",
+							url: "/GetByKey",
+							headers: {"key":thisNeighborhoodKey}
+						}).done(function(data) {
+							
+							var dataJSON = JSON.parse(data);
+							// add neighborhood to loaded neighborhoods, add to options, then display gems
+							var thisNeighborhood = new Neighborhood(dataJSON);
+							self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
+							self.optionNeighborhoods.push(thisNeighborhood);
+							self.displayGems(thisNeighborhoodKey);
+						});
+					})(thisNeighborhoodKey);
+				}
 			}
 		}
 	};
@@ -296,27 +308,19 @@ var ViewModel = function () {
 		var thisGemKey;
 		var thisGem;
 
-		console.log("displaying for ");
-		console.log(neighborhoodKey);
-
-		console.log(thisNeighborhoodGemKeys);
-
 		for (var i = 0; i < thisNeighborhoodGemKeys.length; i++) {
 
 			thisGemKey = thisNeighborhoodGemKeys[i];
-			console.log("this gem ");
 
 			if (self.loadedGems[thisGemKey]) {
 
-				console.log("was already loaded");
 				thisGem = self.loadedGems[thisGemKey];
 				// cant put this after if because need to do it inside async ajax call below
-				var thisGemMarker = new Marker(self.gems()[i]);
+				var thisGemMarker = new Marker(thisGem);
 				self.displayedGems.push(thisGemMarker);
 			}
 			else {
 
-				console.log("needs to be created");
 				(function(thisGemKey) {
 
 					$.ajax({
@@ -331,7 +335,6 @@ var ViewModel = function () {
 						self.loadedGems[newGem["key"]()] = newGem;
 						var thisGemMarker = new Marker(newGem);
 						self.displayedGems.push(thisGemMarker);
-						console.log("finished creating and displaying gem ");
 					});
 				})(thisGemKey);
 			}
@@ -340,13 +343,6 @@ var ViewModel = function () {
 
 	self.destroyDisplayedGems = function () {
 
-		/*
-
-
-
-		revise because it should iterate over properties
-
-		*/
 		for (var i = 0; i < self.displayedGems.length; i++) {
 
 			self.displayedGems[i].marker.setMap(null);
@@ -427,7 +423,6 @@ var ViewModel = function () {
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
-		self.populateLocale("city", "");
 	})();
 }
 
