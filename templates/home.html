@@ -72,7 +72,32 @@
 	<!-- selected info section -->
 	<div id="infodiv">
 		<div id="selectedlocationdiv">
-			<h4>Selected Location Info</h4>
+			<span id="selectedlocationheader">Selected Location Info</span>
+			<!-- if: (selectedLocationWikiInfo().length > 0) -->
+		    <div class="wikipediacontainer">
+		        <div id="wikipediaheader">Wikipedia</div>
+	        	<ul id="wikipedialinks" data-bind="foreach: selectedLocationWikiInfo">
+	        		<li clas="wikipediali"><a data-bind:"text: linkText, href: linkRef"></a>
+	        		</li>
+	        	</ul>
+		    </div>
+		    <!-- /ko -->
+
+		    <!-- if: (selectedLocationNYTimesInfo().length > 0) -->
+		    <div class="nytimescontainer">
+		        <div id="nytimesheader">New York Times</div>
+	        	<ul id="nytimesarticles" data-bind="foreach: selectedLocationNYTimesInfo">
+	        		<li class="nytimesli">why<a data-bind:"text: linkText, href: linkRef"></a>
+	        		</li>
+	        	</ul>
+		    </div>
+		    <!-- /ko -->
+
+		    <!-- if: (selectedLocationNYTimesInfo().length > 0 && selectedLocationWikiInfo().length > 0) -->
+		    <div id="nolocationinfo">
+		    	No location selected.
+		    </div>
+		    <!-- /ko -->
 		</div>
 	</div>
 	<!-- end selected info section -->

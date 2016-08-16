@@ -597,7 +597,8 @@ def ndb_Model_to_Dict(modelInstance):
 				dict[property] = str(getattr(modelInstance, property))
 			elif type(properties[property]) is ndb.BlobProperty:
 
-				dict[property] = getattr(modelInstance, property).encode('base64')
+				dict[property] = getattr(modelInstance, property).\
+					encode('base64')
 			elif type(properties[property]) is ndb.KeyProperty:
 
 				thisKeyProperty = getattr(modelInstance, property)
@@ -944,7 +945,8 @@ class Register(Handler):
 		user.put()
 
 		# if more than one with this email or user name, delete this one
-		# and return invalid.  datastore support for unique entity values is not intuitive
+		# and return invalid.  datastore support for unique entity values 
+		# is not intuitive
 		duplicate = False
 
 		users = User.all()

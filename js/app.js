@@ -66,6 +66,7 @@ var Gem = function (data) {
 
 	var self = this;
 
+	// data from server
 	self.name = ko.observable("Gem (water refill)");
 	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
@@ -113,6 +114,27 @@ var Neighborhood = function (data) {
 	self.gems = ko.observableArray(data["gems"]);
 }
 
+var WikipediaInfo = function (data) {
+
+	var self = this;
+
+	self.articleID = ko.observable(data["articleID"]);
+	self.title = ko.observable(data["title"]);
+	self.linkText = ko.observable(data["linkText"]);
+	self.linkRef = ko.observable(data["linkRef"]);
+	self.extraText = ko.observable(data["extraText"]);
+}
+
+var NYTimesInfo = function (data) {
+
+	var self = this;
+
+	self.title = ko.observable(data["title"]);
+	self.linkText = ko.observable(data["linkText"]);
+	self.linkRef = ko.observable(data["linkRef"]);
+	self.extraText = ko.observable(data["extraText"]);
+}
+
 /*
 *
 *	ViewModel
@@ -144,6 +166,10 @@ var ViewModel = function () {
 	// holds Markers (with data as gem and marker as google api marker)
 	self.displayedGemMarkers = ko.observableArray([]);
 
+	// holds wiki and nyt info for selected location
+	self.selectedLocationWikiInfo = ko.observable([]);
+	self.selectedLocationNYTimesInfo = ko.observable([]);
+
 	/* Custom listeners for selection changes
 	*/
 	self.selectedCountry.subscribe(function(newSelection) {
@@ -151,6 +177,7 @@ var ViewModel = function () {
     	self.filterCities();
     	self.resetOptions("neighborhood");
     	self.destroyDisplayedGemMarkers();
+    	self.setSeletedLocationInfo();
 
     	if (newSelection) {
 
@@ -162,6 +189,7 @@ var ViewModel = function () {
 	self.selectedCity.subscribe(function(newSelection) {
 
 		self.filterNeighborhoods();
+		self.setSeletedLocationInfo();
 
 		if (newSelection) {
 
@@ -172,13 +200,15 @@ var ViewModel = function () {
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
+		self.setSeletedLocationInfo();
+		
     	if (newSelection && !self.selectedGem()) {
 
     		self.displayGems(newSelection["key"]());
     		// center map / show outline of neighborhood
     		// display info about neighborhood
     	}
-	});	
+	});
 
 	/* Modify options based on selections
 	*/
@@ -299,8 +329,14 @@ var ViewModel = function () {
 
 				thisGem = self.loadedGems[thisGemKey];
 				// cant put this after if because need to do it inside async ajax call below
+				// probably could use refactoring
 				var thisGemMarker = new Marker(thisGem, self.loadedNeighborhoods[neighborhoodKey]["name"]);
-				//thisGemMarker.marker.addListener("click", self.toggleGemMarker);
+				thisGemMarker.marker.addListener("click", 
+					function(gemMarker) {
+						 
+						return function() {self.toggleGemMarker(gemMarker)};
+					}(thisGemMarker)
+				);
 				self.displayedGemMarkers.push(thisGemMarker);
 			}
 			else {
@@ -411,12 +447,152 @@ var ViewModel = function () {
 		setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
 	};
 
+	/* Wikipedia API
+	*/
+
+    // load wikipedia links for selected location
+
+    self.setSeletedLocationInfo = function () {
+
+    	// reset the info
+    	self.selectedLocationWikiInfo([]);
+    	self.selectedLocationNYTimesInfo([]);
+    	console.log("resetting");
+
+    	var location;
+
+    	if (self.selectedNeighborhood) {
+
+    		location = self.selectedNeighborhood.name();
+    	}
+    	else if (self.selectedCity) {
+
+    		location = self.selectedCity.name();
+    	}
+    	else if (self.selectedCountry) {
+
+    		location = self.selectedCountry.name();
+    	}
+    	else {
+
+    		// don't search for no location
+    		return;
+    	}
+
+    	// set top 3 related wiki entries and top 5 related nytimes articles
+    	self.setSelectedLocationWikiInfo(location);
+    	self.setSelectedLocationNYTimesInfo(location);
+    };
+
+    self.setSelectedLocationWikiInfo = function(location) {
+
+    	console.log("getting wiki");
+	    var wikiAjaxURL = "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
+
+	    var titles = [];
+
+	    // get the titles
+	    $.ajax({
+	        url: wikiAjaxURL,
+	        dataType: "json",
+	        type: "GET",
+	        success: function(data) {
+
+	            if ("query" in data) {
+
+	                $(data.query.search).each(function(key, value) {
+
+	                    var thisTitle = $(this)[0].title;
+
+	                    // instead of another ajax call to get pageid, could probably
+	                    // link to directly like <a href="wikipedia.org/[title]"></a>
+	                    var thisArticleAjax = "http://en.wikipedsdfsdvsdia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
+	                    
+	                    $.ajax({
+	                        url: thisArticleAjax,
+	                        dataType: "json",
+	                        type: "GET",
+	                        success: function(data) {
+
+	                            var thisID = "";
+
+	                            for (var name in data.query.pages) {
+
+	                                thisID = name.toString();
+	                            }
+
+	                            var infoObj = {
+	                            	title: data.query.pages[thisID].title,
+	                            	articleID: thisID,
+	                            	linkText: data.query.pages[thisID].title,
+	                            	linkRef: "http://en.wikipedia.org/?curid="+thisID,
+	                            	extraText: ""
+	                            }
+
+	                            var thisWikiInfo = new WikipediaInfo(infoObj);
+	                            self.selectedLocationWikiInfo.push(thisWikiInfo);
+	                        }
+	                    }).error(function(error) {
+
+	                        window.alert("Error retrieving Wikipedia link to '"+title[i]+".");
+	                    });
+	                });
+	            }
+	            else {
+
+	                window.alert("No Wikipedia pages matching '" + location + "'");   
+	            }    
+	        }
+	    }).error(function(error) {
+
+	        window.alert("Error retrieving Wikipedia links");
+	    });
+    };
+
+    self.setSelectedLocationNYTimesInfo = function(location) {
+    	/*
+	    // load NY Times articles
+
+	    var nyTimesArticleAjaxURL =  "https://api.nytimes.com/svc/search/v2/articlesearch.json?";
+	    var nyTimesArticleAjaxQuery = "q="+street+", "+city;
+	    var nyTimesAPIKey = "api-key=0da9b2e56d7f4eeeb52ac8398568cef1";
+
+	    nyTimesArticleAjaxURL = nyTimesArticleAjaxURL+nyTimesArticleAjaxQuery+"&"+nyTimesAPIKey;
+
+	    $.getJSON(nyTimesArticleAjaxURL, function(data) {  
+
+	        articles = data.response.docs;
+
+	        for (i = 0; i < articles.length; i++) {
+
+	            var link = "";
+	            var headline = "";
+
+	            var article = articles[i];
+
+	            link = article.web_url;
+	            headline = article.headline.main;
+	            //snippet = articlesJSON["response"]["docs"][i]["snippet"];
+
+	            headlineAsLink = "<a href='" + link + "'>" + headline + "</a>";
+
+	            $nytElem.append("<li>"+headlineAsLink+"</li>");
+	        }
+	    }).error(function (error) {
+
+	        $nytElem.append("<li>Error retrieving NY Times articles</li>");
+	    });
+*/
+    };
+
 	// initialize country and city selects when app starts
 	(function() {
 
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
+		console.log(self.selectedLocationNYTimesInfo().length);
+		console.log(self.selectedLocationWikiInfo().length);
 	})();
 }
 
