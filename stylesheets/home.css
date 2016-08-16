@@ -40,8 +40,9 @@ a {
 	margin-top: 10px;
 	background-color: #f2f2f2;
 	padding: 5px;
-	border: 2px solid black;
+	border: 1px solid black;
 	border-radius: 8px;
+	font-size: .8em;
 }
 
 #navigationlinksheader {
@@ -102,13 +103,12 @@ a {
 }
 
 #selectedlocationdiv {
-	max-height: 100px;
-	overflow: scroll;
 	display: flex;
 	flex-wrap: wrap;
 	padding-right: 2%;
 	padding-left: 2%;
 	font-family: "Garamond";
+	justify-content: center;
 }
 
 #selectedlocationheader {
@@ -124,9 +124,9 @@ a {
 	margin-top: 5px;
 	margin-right: 1%;
 	margin-left: 1%;
+	margin-bottom: 5px;
 	font-size: .8em;
-	height: 50px;
-	overflow: scroll;
+	height: 93px;
 	width: 46%;
 	background: white;
 	border: 1px black solid;
@@ -137,13 +137,20 @@ a {
 	text-align: center;
 }
 
+#wikilinkscontainer {
+
+	margin-top: 3px;
+	max-height: 75px;
+	overflow: scroll;	
+}
+
 .nytimescontainer {
 	margin-top: 5px;
 	margin-right: 1%;
 	margin-left: 1%;
+	margin-bottom: 5px;
 	font-size: .8em;
-	height: 50px;
-	overflow: scroll;
+	height: 93px;
 	width: 46%;
 	background: white;
 	border: 1px black solid;
@@ -154,20 +161,43 @@ a {
 	text-align: center;
 }
 
-#nolocationinfo {
-	text-align: center;
+#nytimesarticlescontainer {
+	margin-top: 3px;
+	max-height: 75px;
+	overflow: scroll;	
 }
 
 #wikipedialinks {
-	margin-top: 2px;
-	margin-bottom: 2px;
-	padding-left: 2px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-right: 6px;
+	padding-left: 20px;
 }
 
 #nytimesarticles {
-	margin-top: 2px;
-	margin-bottom: 2px;
-	padding-left: 2px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-right: 5px;
+	padding-right: 6px;
+	padding-left: 20px;
+}
+
+.wikipediali {
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+.nytimesli {
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+.infolink {
+	text-decoration: none;
+}
+
+.infolink:hover {
+	text-decoration: underline;
 }
 
 @media screen and (max-width: 499px) {

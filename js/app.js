@@ -50,7 +50,6 @@ var Marker = function (data) {
 	var self = this;
 
 	var coords = data["location"]().split(",");
-	console.log(data["name"]());
 
 	self.gemKey = data["key"]();
 	self.marker = new google.maps.Marker({
@@ -167,8 +166,8 @@ var ViewModel = function () {
 	self.displayedGemMarkers = ko.observableArray([]);
 
 	// holds wiki and nyt info for selected location
-	self.selectedLocationWikiInfo = ko.observable([]);
-	self.selectedLocationNYTimesInfo = ko.observable([]);
+	self.selectedLocationWikiInfo = ko.observableArray([]);
+	self.selectedLocationNYTimesInfo = ko.observableArray([]);
 
 	/* Custom listeners for selection changes
 	*/
@@ -201,7 +200,7 @@ var ViewModel = function () {
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
 		self.setSeletedLocationInfo();
-		
+
     	if (newSelection && !self.selectedGem()) {
 
     		self.displayGems(newSelection["key"]());
@@ -236,7 +235,7 @@ var ViewModel = function () {
 		self.resetOptions("neighborhood");
 		self.destroyDisplayedGemMarkers();
 
-		if (self.selectedCountry()) {
+		if (typeof self.selectedCountry() != "undefined") {
 
 			var cityKeyList = self.selectedCountry().cities();
 
@@ -262,7 +261,6 @@ var ViewModel = function () {
 							// add city to loaded cities add to options
 							var thisCity = new City(dataJSON);
 							self.loadedCities[thisCityKey] = thisCity;
-							console.log(thisCity);
 							self.optionCities.push(thisCity);
 						});
 					})(thisCityKey);
@@ -279,7 +277,7 @@ var ViewModel = function () {
 
 		// st bool for "came from user selection"?
 
-		if (self.selectedCity()) {
+		if (typeof self.selectedCity() != "undefined") {
 
 			var neighborhoodKeyList = self.selectedCity().neighborhoods();
 
@@ -325,7 +323,7 @@ var ViewModel = function () {
 
 			thisGemKey = thisNeighborhoodGemKeys[i];
 
-			if (self.loadedGems[thisGemKey]) {
+			if (thisGemKey in self.loadedGems) {
 
 				thisGem = self.loadedGems[thisGemKey];
 				// cant put this after if because need to do it inside async ajax call below
@@ -388,7 +386,6 @@ var ViewModel = function () {
 		
 			country = new Country(countriesJSON[i]);
 			self.loadedCountries[country["key"]()] = country;
-			console.log(country);
 			self.optionCountries.push(country);
 		}
 	};
@@ -429,7 +426,6 @@ var ViewModel = function () {
 		// set selected gem and infowindo html, and toggle animation	
 		var thisGem = self.loadedGems[gemMarker.gemKey];
 		self.selectedGem(thisGem);
-		console.log(self.selectedGem().location());
 
     	infoWindow.close();
     	infoWindow.open(map, gemMarker.marker);
@@ -457,21 +453,20 @@ var ViewModel = function () {
     	// reset the info
     	self.selectedLocationWikiInfo([]);
     	self.selectedLocationNYTimesInfo([]);
-    	console.log("resetting");
 
     	var location;
 
-    	if (self.selectedNeighborhood) {
+    	if (typeof self.selectedNeighborhood() != 'undefined') {
 
-    		location = self.selectedNeighborhood.name();
+    		location = self.selectedNeighborhood().name();
     	}
-    	else if (self.selectedCity) {
+    	else if (typeof self.selectedCity() != 'undefined') {
 
-    		location = self.selectedCity.name();
+    		location = self.selectedCity().name();
     	}
-    	else if (self.selectedCountry) {
+    	else if (typeof self.selectedCountry() != 'undefined') {
 
-    		location = self.selectedCountry.name();
+    		location = self.selectedCountry().name();
     	}
     	else {
 
@@ -486,7 +481,6 @@ var ViewModel = function () {
 
     self.setSelectedLocationWikiInfo = function(location) {
 
-    	console.log("getting wiki");
 	    var wikiAjaxURL = "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
 
 	    var titles = [];
@@ -504,9 +498,9 @@ var ViewModel = function () {
 
 	                    var thisTitle = $(this)[0].title;
 
-	                    // instead of another ajax call to get pageid, could probably
-	                    // link to directly like <a href="wikipedia.org/[title]"></a>
-	                    var thisArticleAjax = "http://en.wikipedsdfsdvsdia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
+	                    // instead of another ajax call to get pageid, 
+	                    // could probably link to directly
+	                    var thisArticleAjax = "http://en.wikipedia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
 	                    
 	                    $.ajax({
 	                        url: thisArticleAjax,
@@ -534,7 +528,7 @@ var ViewModel = function () {
 	                        }
 	                    }).error(function(error) {
 
-	                        window.alert("Error retrieving Wikipedia link to '"+title[i]+".");
+	                        window.alert("Error retrieving Wikipedia link to '"+thisTitle+".");
 	                    });
 	                });
 	            }
@@ -550,12 +544,12 @@ var ViewModel = function () {
     };
 
     self.setSelectedLocationNYTimesInfo = function(location) {
-    	/*
 	    // load NY Times articles
 
 	    var nyTimesArticleAjaxURL =  "https://api.nytimes.com/svc/search/v2/articlesearch.json?";
-	    var nyTimesArticleAjaxQuery = "q="+street+", "+city;
-	    var nyTimesAPIKey = "api-key=0da9b2e56d7f4eeeb52ac8398568cef1";
+	    console.log(location);
+	    var nyTimesArticleAjaxQuery = "q="+location;
+	    var nyTimesAPIKey = "api-key=89e8e32dba894924b8bbfefe96c5f71c";
 
 	    nyTimesArticleAjaxURL = nyTimesArticleAjaxURL+nyTimesArticleAjaxQuery+"&"+nyTimesAPIKey;
 
@@ -570,19 +564,20 @@ var ViewModel = function () {
 
 	            var article = articles[i];
 
-	            link = article.web_url;
-	            headline = article.headline.main;
-	            //snippet = articlesJSON["response"]["docs"][i]["snippet"];
+	            articleObj = {
+	            	title: article.headline.main,
+	            	linkText: article.headline.main,
+	            	linkRef: article.web_url,
+	            	extraText: ""
+	            }
 
-	            headlineAsLink = "<a href='" + link + "'>" + headline + "</a>";
-
-	            $nytElem.append("<li>"+headlineAsLink+"</li>");
+	            thisNYTimesInfo = new NYTimesInfo(articleObj);
+	            self.selectedLocationNYTimesInfo.push(thisNYTimesInfo);
 	        }
 	    }).error(function (error) {
 
-	        $nytElem.append("<li>Error retrieving NY Times articles</li>");
+	        window.alert("Error retrieving NY Times articles");
 	    });
-*/
     };
 
 	// initialize country and city selects when app starts
@@ -591,8 +586,6 @@ var ViewModel = function () {
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
-		console.log(self.selectedLocationNYTimesInfo().length);
-		console.log(self.selectedLocationWikiInfo().length);
 	})();
 }
 
