@@ -15,7 +15,7 @@
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
 
-	<!-- menu bar with filtering/selection -->
+	<!-- menu bar for user selections -->
 	<div class="outerdiv" id="menubar">
 		<div class="locationselect" id="countrydiv">
 			<select id="countryselect" data-bind="options: optionCountries, optionsCaption: '-Select Country-', optionsText: 'name', value: selectedCountry"></select>
@@ -33,8 +33,25 @@
 	<div class="outerdiv" id="googlemapdiv">
     	<div id="googlemap">
     	</div>
+		<div class="displaynone" id="floatingBarsLL">
+			<div class="blockLL" id="rotateLL_01"></div>
+			<div class="blockLL" id="rotateLL_02"></div>
+			<div class="blockLL" id="rotateLL_03"></div>
+			<div class="blockLL" id="rotateLL_04"></div>
+			<div class="blockLL" id="rotateLL_05"></div>
+			<div class="blockLL" id="rotateLL_06"></div>
+			<div class="blockLL" id="rotateLL_07"></div>
+			<div class="blockLL" id="rotateLL_08"></div>
+		</div>
 	</div>
 	<!-- end google map -->
+
+	<div class="displaynone outerdiv" id="hidedirectionsdiv">
+		<button id="hidedirectionsbutton" type="button" data-bind="click: toggleShowingDirections">Hide Directions</button>
+	</div>
+	<div class="outerdiv" id="yourlocationdiv">
+		<button id="yourlocationbutton" type="button" data-bind="click: setCurrentGoogleMapLocation">Center map on my location</button>
+	</div>
 
 	<!-- info window section -->
 	<div class="displaynone" id="geminfowindowselector">
@@ -54,10 +71,13 @@
 				<span>Labeled ozone</span>
 				<br>
 				<!-- /ko -->
+				<!-- ko if: notes -->
 				<span>Notes: <span data-bind="text: notes"></span></span>
+				<!-- /ko -->
 				<!-- ko if: !picture -->
 				<span>No picture yet.</span>	
 				<!-- /ko -->
+				<button class="getdirectionsbutton" type="button">show walking path</button>
 			</div>
 			<div class="geminfowindowimgdiv">
 	    		<!-- ko if: picture -->
@@ -73,7 +93,7 @@
 	<div id="infodiv">
 		<div id="selectedlocationdiv">
 
-			<span id="selectedlocationheader">Selected Location Info</span>
+			<span id="selectedlocationheader">Info for: <span class="selectedlocationname" data-bind="text: selectedLocationName"></span></span>
 
 		    <div class="wikipediacontainer"> 
 		        <div id="wikipediaheader">Wikipedia</div>

@@ -11,9 +11,11 @@
 *
 */
 setMapDivHeight();
+setLocationLoadingPosition();
 window.onresize = function(event) {
     
     setMapDivHeight();
+    setLocationLoadingPosition();
 };
 
 /*
@@ -26,6 +28,7 @@ var map;
 var infoWindow;
 var directionsService;
 var directionsDisplay;
+var yourLocationMarker;
 
 /*
 *
@@ -45,7 +48,7 @@ var User = function (data) {
 }
 */
 
-var Marker = function (data) {
+var GemMarker = function (data) {
 	// a marker is a google map marker that holds a gem object
 	var self = this;
 
@@ -168,20 +171,56 @@ var ViewModel = function () {
 	// holds wiki and nyt info for selected location
 	self.selectedLocationWikiInfo = ko.observableArray([]);
 	self.selectedLocationNYTimesInfo = ko.observableArray([]);
+	self.selectedLocationName = ko.observable("[select location]");
+
+	self.showingDirections = ko.observable(false);
+
+	/* helpers
+	*/
+
+	self.toggleShowingDirections = function() {
+
+		self.showingDirections(!self.showingDirections());
+	}
 
 	/* Custom listeners for selection changes
 	*/
+
+	self.showingDirections.subscribe(function(newSelection) {
+
+		if (newSelection) {
+
+			for (var i = 0; i < self.displayedGemMarkers().length; i++) {
+
+				if (self.displayedGemMarkers()[i].gemKey != self.selectedGem().key()) {
+					
+					self.displayedGemMarkers()[i].marker.setMap(null);
+				}
+			}
+			$("#hidedirectionsdiv").removeClass("displaynone");
+		}
+		else {
+
+			for (var i = 0; i < self.displayedGemMarkers().length; i++) {
+					
+				self.displayedGemMarkers()[i].marker.setMap(map);
+			}
+			
+			directionsDisplay.setMap(null);
+			$("#hidedirectionsdiv").addClass("displaynone");
+		}
+	});
+
 	self.selectedCountry.subscribe(function(newSelection) {
 
     	self.filterCities();
     	self.resetOptions("neighborhood");
     	self.destroyDisplayedGemMarkers();
     	self.setSeletedLocationInfo();
+    	self.showingDirections(false);
 
     	if (newSelection) {
-
-    		// center map
-    		// display info about country
+    		//map.setCenter(newSelection.location());
     	}
 	});
 
@@ -189,23 +228,23 @@ var ViewModel = function () {
 
 		self.filterNeighborhoods();
 		self.setSeletedLocationInfo();
+		self.showingDirections(false);
 
-		if (newSelection) {
+    	if (newSelection) {
 
-    		// center map
-    		// display info about city
-		}
+    		//map.setCenter(newSelection.location());
+    	}
 	});
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
 
-		self.setSeletedLocationInfo();
+    	self.showingDirections(false);
 
     	if (newSelection && !self.selectedGem()) {
 
+			self.setSeletedLocationInfo();
     		self.displayGems(newSelection["key"]());
-    		// center map / show outline of neighborhood
-    		// display info about neighborhood
+    		map.setCenter(newSelection.location());
     	}
 	});
 
@@ -328,7 +367,7 @@ var ViewModel = function () {
 				thisGem = self.loadedGems[thisGemKey];
 				// cant put this after if because need to do it inside async ajax call below
 				// probably could use refactoring
-				var thisGemMarker = new Marker(thisGem, self.loadedNeighborhoods[neighborhoodKey]["name"]);
+				var thisGemMarker = new GemMarker(thisGem, self.loadedNeighborhoods[neighborhoodKey]["name"]);
 				thisGemMarker.marker.addListener("click", 
 					function(gemMarker) {
 						 
@@ -352,7 +391,7 @@ var ViewModel = function () {
 						// add gem to loaded gems, then to displayed gems
 						var newGem = new Gem(dataJSON);
 						self.loadedGems[newGem["key"]()] = newGem;
-						var thisGemMarker = new Marker(newGem);
+						var thisGemMarker = new GemMarker(newGem);
 						thisGemMarker.marker.addListener("click", 
 							function(gemMarker) {
 								 
@@ -437,16 +476,46 @@ var ViewModel = function () {
     	clone.id = "realwindow";
     	clone.className = "";
 
+    	// attach event listener to infobox button because data-bind="click: $parent.getDirections"
+    	// does not work when cloned into the infobox
+		var directionsButton = clone.getElementsByTagName("div")[0].getElementsByTagName("button")[0];
+		directionsButton.addEventListener("click", function () {
+
+			self.getDirections(gemMarker.marker.position);
+		});
+
     	infoWindow.setContent(clone);
 
 		gemMarker.marker.setAnimation(google.maps.Animation.BOUNCE);
 		setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
 	};
 
-	/* Wikipedia API
+	/* Third Party API Calls
 	*/
 
-    // load wikipedia links for selected location
+	self.setCurrentGoogleMapLocation = function () {
+
+		detectUserLocation();
+	};
+
+    self.getDirections = function (endLocation) {
+
+    	console.log("trying");
+    	console.log(yourLocationMarker);
+    	console.log(endLocation);
+    	if (yourLocationMarker) {
+
+    		console.log("showing directions");
+    		console.log(yourLocationMarker.position);
+			showDirections(endLocation, yourLocationMarker.position, "WALKING");
+			self.showingDirections(true);
+    	}
+    	else {
+
+    		window.alert("Location services don't seem to be enabled. \
+    			Try pressing the green \"Center map on my location\" button.");
+    	}
+    };
 
     self.setSeletedLocationInfo = function () {
 
@@ -455,21 +524,28 @@ var ViewModel = function () {
     	self.selectedLocationNYTimesInfo([]);
 
     	var location;
+    	var name;
 
     	if (typeof self.selectedNeighborhood() != 'undefined') {
 
     		location = self.selectedNeighborhood().name();
+    		name = location + ", " + self.selectedCity().name() + ", " + self.selectedCountry().name();
+    		self.selectedLocationName(name);
     	}
     	else if (typeof self.selectedCity() != 'undefined') {
 
     		location = self.selectedCity().name();
+    		name = location + ", " + self.selectedCountry().name();
+    		self.selectedLocationName(name);
     	}
     	else if (typeof self.selectedCountry() != 'undefined') {
 
     		location = self.selectedCountry().name();
+    		self.selectedLocationName(location);
     	}
     	else {
 
+    		self.selectedLocationName("[select location]");
     		// don't search for no location
     		return;
     	}
@@ -480,7 +556,7 @@ var ViewModel = function () {
     };
 
     self.setSelectedLocationWikiInfo = function(location) {
-
+    	// load wikipedia links related to a location
 	    var wikiAjaxURL = "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
 
 	    var titles = [];
@@ -544,10 +620,9 @@ var ViewModel = function () {
     };
 
     self.setSelectedLocationNYTimesInfo = function(location) {
-	    // load NY Times articles
+	    // load NY Times articles related to a location
 
 	    var nyTimesArticleAjaxURL =  "https://api.nytimes.com/svc/search/v2/articlesearch.json?";
-	    console.log(location);
 	    var nyTimesArticleAjaxQuery = "q="+location;
 	    var nyTimesAPIKey = "api-key=89e8e32dba894924b8bbfefe96c5f71c";
 
@@ -580,7 +655,8 @@ var ViewModel = function () {
 	    });
     };
 
-	// initialize country and city selects when app starts
+    /* Initialization
+    */
 	(function() {
 
 		// if more than one country, should not populate cities at start
@@ -608,7 +684,14 @@ function initMap() {
     directionsDisplay = new google.maps.DirectionsRenderer;
 	infoWindow = new google.maps.InfoWindow({map: map});
 
-	// Try HTML5 geolocation.
+	detectUserLocation();
+
+    directionsDisplay.setMap(map);
+}
+
+function detectUserLocation () {
+	// Try HTML5 geolocation and render marker
+
     if (navigator.geolocation) {
 
       	navigator.geolocation.getCurrentPosition(function(position) {
@@ -617,10 +700,10 @@ function initMap() {
           		lng: position.coords.longitude
         	};
 
-        	infoWindow.setPosition(pos);
-        	infoWindow.setContent('Location found.');
         	map.setCenter(pos);
         	map.setZoom(15);
+
+        	createAndRenderLocationMarker(map.getCenter());
       	}, function() {
         	
         	handleLocationError(true, infoWindow, map.getCenter());
@@ -630,8 +713,6 @@ function initMap() {
     	// Browser doesn't support Geolocation
       	handleLocationError(false, infoWindow, map.getCenter());
     }
-
-    directionsDisplay.setMap(map);
 }
 
 function handleLocationError(browserHasGeolocation, infoWindow, pos) {
@@ -640,6 +721,45 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
 	infoWindow.setContent(browserHasGeolocation ?
                       'Error: The Geolocation service failed.' :
                       'Error: Your browser doesn\'t support geolocation.');
+}
+
+function createAndRenderLocationMarker(yourLocation) {
+	// show location on map
+
+	// if already showing, destroy old marker
+	if (yourLocationMarker != null) {
+
+		yourLocationMarker.setMap(null);
+		yourLocationMarker = null;
+	}
+
+	var yourLocationIcon = {
+
+		path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+		fillColor: '#009900',
+		fillOpacity: 1.0,
+		scale: 4,
+		strokeColor: '#000000',
+		strokeWeight: 1
+	};
+
+	yourLocationMarker = new google.maps.Marker({
+
+		position: yourLocation,
+		icon: yourLocationIcon,
+		map: map
+	});
+
+    infoWindow.open(map, yourLocationMarker);
+    infoWindow.setContent("You are here");
+
+	yourLocationMarker.addListener("click", function() {
+
+		infoWindow.close();
+    	infoWindow.open(map, yourLocationMarker);
+
+    	infoWindow.setContent("You are here");
+	});
 }
 
 // show directions from current location to selected marker
@@ -655,6 +775,7 @@ function showDirections(destination, origin, travelMode) {
 
 		if (status === 'OK') {
 
+			directionsDisplay.setMap(map);
 			directionsDisplay.setDirections(response);
 		} else {
 
@@ -670,8 +791,14 @@ function showDirections(destination, origin, travelMode) {
 */
 function setMapDivHeight() {
 
-    var width = $('#googlemapdiv').width();
-	$('#googlemapdiv').css({'height':width+'px'});
+    var width = $("#googlemapdiv").width();
+	$("#googlemapdiv").css({"height":width+"px"});
+}
+
+function setLocationLoadingPosition() {
+
+	var heightOffset = $("#googlemapdiv").height() / 2;
+	$("#floatingBarsLL").css({"top":"-"+heightOffset+"px"});
 }
 
 /*
