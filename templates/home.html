@@ -31,7 +31,9 @@
 
 	<!-- list view to meet udacity requirements -->
 	<div id="listviewdiv" data-bind="foreach: displayedGemMarkers">
+		<!-- ko if: $data.isDisplayed -->
 		<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
+		<!-- /ko -->
 	</div>
 	<!-- end list view -->
 

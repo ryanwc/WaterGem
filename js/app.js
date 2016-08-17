@@ -55,6 +55,7 @@ var GemMarker = function (data) {
 	var coords = data["location"]().split(",");
 
 	self.gemKey = data["key"]();
+	self.isDisplayed = ko.observable(true);
 
 	// marker is not a knockout observable
 	self.marker = new google.maps.Marker({
@@ -187,6 +188,7 @@ var ViewModel = function () {
 
 	self.clickGemFromListView = function (clickedGemMarker) {
 
+		infoWindow.close();
 		new google.maps.event.trigger(clickedGemMarker.marker, 'click' );
 	};
 
@@ -204,6 +206,7 @@ var ViewModel = function () {
 				if (self.displayedGemMarkers()[i].gemKey != self.selectedGem().key()) {
 					
 					self.displayedGemMarkers()[i].marker.setMap(null);
+					self.displayedGemMarkers()[i].isDisplayed(false);
 				}
 			}
 			$("#hidedirectionsdiv").removeClass("displaynone");
@@ -212,7 +215,9 @@ var ViewModel = function () {
 
 			for (var i = 0; i < self.displayedGemMarkers().length; i++) {
 					
+				// should probaby only display if was displayed before
 				self.displayedGemMarkers()[i].marker.setMap(map);
+				self.displayedGemMarkers()[i].isDisplayed(true);
 			}
 			
 			directionsDisplay.setMap(null);
@@ -235,6 +240,7 @@ var ViewModel = function () {
 
 	self.selectedCity.subscribe(function(newSelection) {
 
+    	self.destroyDisplayedGemMarkers();
 		self.filterNeighborhoods();
 		self.setSeletedLocationInfo();
 		self.showingDirections(false);
@@ -249,11 +255,15 @@ var ViewModel = function () {
 
     	self.showingDirections(false);
 
-    	if (newSelection && !self.selectedGem()) {
+    	if (newSelection) {
 
 			self.setSeletedLocationInfo();
-    		self.displayGems(newSelection["key"]());
+    		self.filterGems(newSelection["key"]());
     		//map.setCenter(newSelection.location());
+    	}
+    	else {
+
+    		self.filterNeighborhoods();
     	}
 	});
 
@@ -435,18 +445,45 @@ var ViewModel = function () {
 					}).fail(function(error) {
 
 						$("#googlemaploadinggif").addClass("displaynone");
-						window.alert("Errir retrieving gems from the server");
+						window.alert("Error retrieving gems from the server");
 					});
 				})(thisGemKey);
 			}
 		}
 	};
 
+	self.filterGems = function (neighborhoodKey) {
+		// if selecting neighborhood, 
+		// we know all of the gems in this city are displayed already
+		var displayedGemMarker;
+		var displayedGemKey;
+		var displayedGem;
+
+		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
+
+			displayedGemMarker = self.displayedGemMarkers()[i];
+			displayedGemKey = displayedGemMarker.gemKey;
+			displayedGem = self.loadedGems[displayedGemKey];
+
+			if (displayedGem.neighborhood()[0][1] == neighborhoodKey[1]) {
+
+				displayedGemMarker.marker.setMap(map);
+				displayedGemMarker.isDisplayed(true);
+			}
+			else {
+
+				displayedGemMarker.marker.setMap(null);
+				displayedGemMarker.isDisplayed(false);
+			}
+		}
+	}
+
 	self.destroyDisplayedGemMarkers = function () {
 
 		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
 
 			self.displayedGemMarkers()[i].marker.setMap(null);
+			self.displayedGemMarkers()[i].isDisplayed(false);
 			self.displayedGemMarkers()[i].marker = null;
 			self.displayedGemMarkers()[i].data = null;
 		}
