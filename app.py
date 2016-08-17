@@ -558,16 +558,6 @@ LOCALES = {
 		}
 	}
 
-# wiki endings:
-# bangkok:
-# Chom_Thong_District,_Bangkok
-# all others end in _District
-# chiang mai:
-# Chang_Phueak,_Chiang_Mai
-# Pa_Tan_Subdistrict,_Chiang_Mai
-# Tha_Sala,_Chiang_Mai
-# Pa_Daet,_Chiang_Mai
-
 ### helper functions
 
 def ndb_Model_to_Dict(modelInstance):
@@ -756,54 +746,54 @@ class Home(Handler):
 		username = getUserFromSecureCookie(self.request.\
 			cookies.get("username"))
 
-		'''
 		#
 		# only do after datastore clear to re-populate defaults
 		#
-		imgPath = os.getcwd() + "/images/"
+		if not Country.query().get():
 
-		for countryName in LOCALES:
+			imgPath = os.getcwd() + "/images/"
 
-			countryObj = Country(name=countryName, cities=[])
-			countryObj.put()
+			for countryName in LOCALES:
 
-			for cityName in LOCALES[countryName]:
+				countryObj = Country(name=countryName, cities=[])
+				countryObj.put()
 
-				cityObj = City(name=cityName, country=countryObj.key,
-					neighborhoods=[])
-				cityObj.put()
+				for cityName in LOCALES[countryName]:
 
-				for neighborhoodName in LOCALES[countryName][cityName]:
+					cityObj = City(name=cityName, country=countryObj.key,
+						neighborhoods=[])
+					cityObj.put()
 
-					neighborhoodObj = Neighborhood(name=neighborhoodName,
-						city=cityObj.key, gems=[])
-					neighborhoodObj.put()
+					for neighborhoodName in LOCALES[countryName][cityName]:
 
-					for gem in LOCALES[countryName][cityName][neighborhoodName]:
+						neighborhoodObj = Neighborhood(name=neighborhoodName,
+							city=cityObj.key, gems=[])
+						neighborhoodObj.put()
 
-						picture = None
-						if gem["picname"]:
-							thisImgPath = imgPath + gem["picname"] + ".jpg"
-							picture = open(thisImgPath, "rb").read()
+						for gem in LOCALES[countryName][cityName][neighborhoodName]:
 
-						newGem = Gem(location=ndb.GeoPt(gem["location"]), 
-							neighborhood=neighborhoodObj.key,
-							prices=gem["prices"], uv=gem["uv"],
-							ozone=gem["ozone"], confirmed=gem["confirmed"],
-							company=gem["company"], notes=gem["notes"],
-							gemusers=[], picture=picture)
+							picture = None
+							if gem["picname"]:
+								thisImgPath = imgPath + gem["picname"] + ".jpg"
+								picture = open(thisImgPath, "rb").read()
 
-						newGem.put()
-						neighborhoodObj.gems.append(newGem.key)
+							newGem = Gem(location=ndb.GeoPt(gem["location"]), 
+								neighborhood=neighborhoodObj.key,
+								prices=gem["prices"], uv=gem["uv"],
+								ozone=gem["ozone"], confirmed=gem["confirmed"],
+								company=gem["company"], notes=gem["notes"],
+								gemusers=[], picture=picture)
 
-					neighborhoodObj.put()
-					cityObj.neighborhoods.append(neighborhoodObj.key)
+							newGem.put()
+							neighborhoodObj.gems.append(newGem.key)
 
-				cityObj.put()
-				countryObj.cities.append(cityObj.key)
+						neighborhoodObj.put()
+						cityObj.neighborhoods.append(neighborhoodObj.key)
 
-			countryObj.put()
-		'''
+					cityObj.put()
+					countryObj.cities.append(cityObj.key)
+
+				countryObj.put()
 
 		self.render("home.html", username=username)
 
