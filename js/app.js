@@ -244,7 +244,7 @@ var ViewModel = function () {
 
 			self.setSeletedLocationInfo();
     		self.displayGems(newSelection["key"]());
-    		map.setCenter(newSelection.location());
+    		//map.setCenter(newSelection.location());
     	}
 	});
 
@@ -288,6 +288,7 @@ var ViewModel = function () {
 				}
 				else {
 
+					$("#googlemaploadinggif").removeClass("displaynone");
 					(function(thisCityKey) {
 
 						$.ajax({
@@ -295,12 +296,16 @@ var ViewModel = function () {
 							url: "/GetByKey",
 							headers: {"key":thisCityKey}
 						}).done(function(data) {
-							
+							$("#googlemaploadinggif").addClass("displaynone");
 							var dataJSON = JSON.parse(data);
 							// add city to loaded cities add to options
 							var thisCity = new City(dataJSON);
 							self.loadedCities[thisCityKey] = thisCity;
 							self.optionCities.push(thisCity);
+						}).error(function(error) {
+
+							$("#googlemaploadinggif").addClass("displaynone");
+							window.alert("Error retrieving cities from the server");
 						});
 					})(thisCityKey);
 				}
@@ -314,7 +319,7 @@ var ViewModel = function () {
 		self.resetOptions("neighborhood");
 		self.destroyDisplayedGemMarkers();
 
-		// st bool for "came from user selection"?
+		// question: set bool for "came from user selection"?
 
 		if (typeof self.selectedCity() != "undefined") {
 
@@ -331,6 +336,7 @@ var ViewModel = function () {
 				}
 				else {
 		
+					$("#googlemaploadinggif").removeClass("displaynone");
 					(function(thisNeighborhoodKey) {
 
 						$.ajax({
@@ -339,12 +345,17 @@ var ViewModel = function () {
 							headers: {"key":thisNeighborhoodKey}
 						}).done(function(data) {
 							
+							$("#googlemaploadinggif").addClass("displaynone");
 							var dataJSON = JSON.parse(data);
 							// add neighborhood to loaded neighborhoods, add to options, then display gems
 							var thisNeighborhood = new Neighborhood(dataJSON);
 							self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
 							self.optionNeighborhoods.push(thisNeighborhood);
 							self.displayGems(thisNeighborhoodKey);
+						}).error(function(error) {
+
+							$("#googlemaploadinggif").addClass("displaynone");
+							window.alert("Error retrieving neighborhoods from the server");
 						});
 					})(thisNeighborhoodKey);
 				}
@@ -378,6 +389,8 @@ var ViewModel = function () {
 			}
 			else {
 
+				$("#googlemaploadinggif").removeClass("displaynone");
+
 				(function(thisGemKey) {
 
 					$.ajax({
@@ -386,6 +399,7 @@ var ViewModel = function () {
 						headers: {"key":thisGemKey}
 					}).done(function(data) {
 						
+						$("#googlemaploadinggif").addClass("displaynone");
 						var dataJSON = JSON.parse(data);
 						dataJSON["neighborhoodName"] = self.loadedNeighborhoods[neighborhoodKey].name();
 						// add gem to loaded gems, then to displayed gems
@@ -399,6 +413,10 @@ var ViewModel = function () {
 							}(thisGemMarker)
 						);
 						self.displayedGemMarkers.push(thisGemMarker);
+					}).error(function(error) {
+
+						$("#googlemaploadinggif").addClass("displaynone");
+						window.alert("Errir retrieving gems from the server");
 					});
 				})(thisGemKey);
 			}
@@ -442,12 +460,14 @@ var ViewModel = function () {
 	self.populateLocale = function(kind, pythonDictParamString) {
 		// ajax query to server for initial select options locales (e.g., countries, cities)
 		// if have many more countries, mofify to only populate cities by country select
+		$("#googlemaploadinggif").removeClass("displaynone");
 		$.ajax({
 			type: "GET",
 			url: "/GetLocales",
 			headers: {"Kind":kind, "Queryparams":pythonDictParamString}
 		}).done(function(data) {
 			
+			$("#googlemaploadinggif").addClass("displaynone");
 			var dataJSON = JSON.parse(data);
 
 			if (kind == "country") {
@@ -458,6 +478,10 @@ var ViewModel = function () {
 
 				self.populateCities(dataJSON);
 			}
+		}).error(function(error) {
+
+			$("#googlemaploadinggif").addClass("displaynone");
+			window.alert("Error retrieving data from the server");
 		});
 	};
 
@@ -490,7 +514,7 @@ var ViewModel = function () {
 		setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
 	};
 
-	/* Third Party API Calls
+	/* Third Party API Related
 	*/
 
 	self.setCurrentGoogleMapLocation = function () {
@@ -500,13 +524,8 @@ var ViewModel = function () {
 
     self.getDirections = function (endLocation) {
 
-    	console.log("trying");
-    	console.log(yourLocationMarker);
-    	console.log(endLocation);
     	if (yourLocationMarker) {
 
-    		console.log("showing directions");
-    		console.log(yourLocationMarker.position);
 			showDirections(endLocation, yourLocationMarker.position, "WALKING");
 			self.showingDirections(true);
     	}
@@ -561,6 +580,7 @@ var ViewModel = function () {
 
 	    var titles = [];
 
+		$("#wikiinfoloadinggif").removeClass("displaynone");
 	    // get the titles
 	    $.ajax({
 	        url: wikiAjaxURL,
@@ -583,7 +603,8 @@ var ViewModel = function () {
 	                        dataType: "json",
 	                        type: "GET",
 	                        success: function(data) {
-
+								
+								$("#wikiinfoloadinggif").addClass("displaynone");
 	                            var thisID = "";
 
 	                            for (var name in data.query.pages) {
@@ -604,12 +625,14 @@ var ViewModel = function () {
 	                        }
 	                    }).error(function(error) {
 
+							$("#wikiinfoloadinggif").addClass("displaynone");
 	                        window.alert("Error retrieving Wikipedia link to '"+thisTitle+".");
 	                    });
 	                });
 	            }
 	            else {
 
+					$("#wikiinfoloadinggif").addClass("displaynone");
 	                window.alert("No Wikipedia pages matching '" + location + "'");   
 	            }    
 	        }
@@ -628,8 +651,10 @@ var ViewModel = function () {
 
 	    nyTimesArticleAjaxURL = nyTimesArticleAjaxURL+nyTimesArticleAjaxQuery+"&"+nyTimesAPIKey;
 
+		$("#nytimesinfoloadinggif").removeClass("displaynone");
 	    $.getJSON(nyTimesArticleAjaxURL, function(data) {  
 
+			$("#nytimesinfoloadinggif").addClass("displaynone");
 	        articles = data.response.docs;
 
 	        for (i = 0; i < articles.length; i++) {
@@ -651,6 +676,7 @@ var ViewModel = function () {
 	        }
 	    }).error(function (error) {
 
+			$("#nytimesinfoloadinggif").addClass("displaynone");
 	        window.alert("Error retrieving NY Times articles");
 	    });
     };
@@ -798,7 +824,7 @@ function setMapDivHeight() {
 function setLocationLoadingPosition() {
 
 	var heightOffset = $("#googlemapdiv").height() / 2;
-	$("#floatingBarsLL").css({"top":"-"+heightOffset+"px"});
+	$("#googlemaploadinggif").css({"top":"-"+heightOffset+"px"});
 }
 
 /*

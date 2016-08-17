@@ -10,7 +10,7 @@
 
 {% block pageContent %}
 
-	<div class="headerdiv outerdiv">
+	<div class="outerdiv" id="headerdiv">
 		<h1 id="headerlogo">WaterGem</h1>
 		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
 	</div>
@@ -33,15 +33,15 @@
 	<div class="outerdiv" id="googlemapdiv">
     	<div id="googlemap">
     	</div>
-		<div class="displaynone" id="floatingBarsLL">
-			<div class="blockLL" id="rotateLL_01"></div>
-			<div class="blockLL" id="rotateLL_02"></div>
-			<div class="blockLL" id="rotateLL_03"></div>
-			<div class="blockLL" id="rotateLL_04"></div>
-			<div class="blockLL" id="rotateLL_05"></div>
-			<div class="blockLL" id="rotateLL_06"></div>
-			<div class="blockLL" id="rotateLL_07"></div>
-			<div class="blockLL" id="rotateLL_08"></div>
+		<div class="displaynone" id="googlemaploadinggif">
+			<div class="maploadinggif" id="maploadinggif_01"></div>
+			<div class="maploadinggif" id="maploadinggif_02"></div>
+			<div class="maploadinggif" id="maploadinggif_03"></div>
+			<div class="maploadinggif" id="maploadinggif_04"></div>
+			<div class="maploadinggif" id="maploadinggif_05"></div>
+			<div class="maploadinggif" id="maploadinggif_06"></div>
+			<div class="maploadinggif" id="maploadinggif_07"></div>
+			<div class="maploadinggif" id="maploadinggif_08"></div>
 		</div>
 	</div>
 	<!-- end google map -->
@@ -98,20 +98,54 @@
 		    <div class="wikipediacontainer"> 
 		        <div id="wikipediaheader">Wikipedia</div>
 		        <div id="wikilinkscontainer">
+		        	<div class="displaynone" id="wikiinfoloadinggif">
+						<div class="infoloadinggif_1 infoloadinggif"></div>
+						<div class="infoloadinggif_2 infoloadinggif"></div>
+						<div class="infoloadinggif_3 infoloadinggif"></div>
+						<div class="infoloadinggif_4 infoloadinggif"></div>
+						<div class="infoloadinggif_5 infoloadinggif"></div>
+						<div class="infoloadinggif_6 infoloadinggif"></div>
+						<div class="infoloadinggif_7 infoloadinggif"></div>
+						<div class="infoloadinggif_8 infoloadinggif"></div>
+					</div>
+					<!-- ko if: selectedLocationWikiInfo().length > 0 -->
 		        	<ul id="wikipedialinks" data-bind="foreach: selectedLocationWikiInfo">
 		        		<li class="wikipediali"><a class="infolink" data-bind="text: linkText, attr: {href: linkRef}"></a>
 		        		</li>
 		        	</ul>
+		        	<!-- /ko -->
+		        	<!-- ko if: selectedLocationWikiInfo().length < 1 -->
+		        	<div class="noinfotoshow">
+		        		Nothing to show.
+		        	</div>
+		        	<!-- /ko -->
 		        </div>
 		    </div>
 
 		    <div class="nytimescontainer">
 		        <div id="nytimesheader">New York Times</div>
 		        <div id="nytimesarticlescontainer">
+		        	<div class="displaynone" id="nytimesinfoloadinggif">
+						<div class="infoloadinggif_1 infoloadinggif"></div>
+						<div class="infoloadinggif_2 infoloadinggif"></div>
+						<div class="infoloadinggif_3 infoloadinggif"></div>
+						<div class="infoloadinggif_4 infoloadinggif"></div>
+						<div class="infoloadinggif_5 infoloadinggif"></div>
+						<div class="infoloadinggif_6 infoloadinggif"></div>
+						<div class="infoloadinggif_7 infoloadinggif"></div>
+						<div class="infoloadinggif_8 infoloadinggif"></div>
+					</div>
+					<!-- ko if: selectedLocationNYTimesInfo().length > 0 -->
 		        	<ul id="nytimesarticles" data-bind="foreach: selectedLocationNYTimesInfo">
 		        		<li class="nytimesli"><a class="infolink" data-bind="text: linkText, attr: {href: linkRef}"></a>
 		        		</li>
 		        	</ul>
+		        	<!-- /ko -->
+		        	<!-- ko if: selectedLocationNYTimesInfo().length < 1 -->
+		        	<div class="noinfotoshow">
+		        		Nothing to show.
+		        	</div>
+		        	<!-- /ko -->
 		        </div>
 		    </div>
 
