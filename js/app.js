@@ -183,7 +183,12 @@ var ViewModel = function () {
 	self.toggleShowingDirections = function() {
 
 		self.showingDirections(!self.showingDirections());
-	}
+	};
+
+	self.clickGemFromListView = function (clickedGemMarker) {
+
+		new google.maps.event.trigger(clickedGemMarker.marker, 'click' );
+	};
 
 	/* Custom listeners for selection changes
 	*/
@@ -289,7 +294,7 @@ var ViewModel = function () {
 				if (thisCityKey in self.loadedCities) {
 
 					self.optionCities.push(self.loadedCities[thisCityKey]);
-					self.optionCountries.sort();
+					self.optionCities.sort();
 				}
 				else {
 
@@ -307,8 +312,14 @@ var ViewModel = function () {
 							var thisCity = new City(dataJSON);
 							self.loadedCities[thisCityKey] = thisCity;
 							self.optionCities.push(thisCity);
-							self.optionCountries.sort();
-						}).error(function(error) {
+							self.optionCities.sort();
+							// to meet udacity requirements of "display at least 5 markers at start"
+							// remove for production
+							if (thisCity.name() == "Chiang Mai") {
+
+								self.selectedCity(thisCity);
+							}
+						}).fail(function(error) {
 
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving cities from the server");
@@ -360,7 +371,7 @@ var ViewModel = function () {
 							self.optionNeighborhoods.push(thisNeighborhood);
 							self.optionNeighborhoods.sort();
 							self.displayGems(thisNeighborhoodKey);
-						}).error(function(error) {
+						}).fail(function(error) {
 
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving neighborhoods from the server");
@@ -421,7 +432,7 @@ var ViewModel = function () {
 							}(thisGemMarker)
 						);
 						self.displayedGemMarkers.push(thisGemMarker);
-					}).error(function(error) {
+					}).fail(function(error) {
 
 						$("#googlemaploadinggif").addClass("displaynone");
 						window.alert("Errir retrieving gems from the server");
@@ -471,13 +482,6 @@ var ViewModel = function () {
 			self.loadedCities[city["key"]()] = city;
 			self.optionCities.push(city);
 			self.optionCountries.sort();
-
-			// to meet udacity requirements of "display at least 5 markers at start"
-			// remove for production
-			if (city.name() == "Chiang Mai") {
-
-				self.selectedCity(city);
-			}
 		}
 	};
 
@@ -502,7 +506,7 @@ var ViewModel = function () {
 
 				self.populateCities(dataJSON);
 			}
-		}).error(function(error) {
+		}).fail(function(error) {
 
 			$("#googlemaploadinggif").addClass("displaynone");
 			window.alert("Error retrieving data from the server");
@@ -647,7 +651,7 @@ var ViewModel = function () {
 	                            var thisWikiInfo = new WikipediaInfo(infoObj);
 	                            self.selectedLocationWikiInfo.push(thisWikiInfo);
 	                        }
-	                    }).error(function(error) {
+	                    }).fail(function(error) {
 
 							$("#wikiinfoloadinggif").addClass("displaynone");
 	                        window.alert("Error retrieving Wikipedia link to '"+thisTitle+".");
@@ -660,7 +664,7 @@ var ViewModel = function () {
 	                window.alert("No Wikipedia pages matching '" + location + "'");   
 	            }    
 	        }
-	    }).error(function(error) {
+	    }).fail(function(error) {
 
 	        window.alert("Error retrieving Wikipedia links");
 	    });
@@ -698,7 +702,7 @@ var ViewModel = function () {
 	            thisNYTimesInfo = new NYTimesInfo(articleObj);
 	            self.selectedLocationNYTimesInfo.push(thisNYTimesInfo);
 	        }
-	    }).error(function (error) {
+	    }).fail(function (error) {
 
 			$("#nytimesinfoloadinggif").addClass("displaynone");
 	        window.alert("Error retrieving NY Times articles");
@@ -712,7 +716,6 @@ var ViewModel = function () {
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
-		self.populateLocale("city", "");
 	})();
 }
 
