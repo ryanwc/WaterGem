@@ -55,6 +55,8 @@ var GemMarker = function (data) {
 	var coords = data["location"]().split(",");
 
 	self.gemKey = data["key"]();
+
+	// marker is not a knockout observable
 	self.marker = new google.maps.Marker({
 
 		position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
@@ -186,6 +188,8 @@ var ViewModel = function () {
 	/* Custom listeners for selection changes
 	*/
 
+	// TO-DO: improve inefficient alphabetical sort of dropdowns after every change
+
 	self.showingDirections.subscribe(function(newSelection) {
 
 		if (newSelection) {
@@ -285,6 +289,7 @@ var ViewModel = function () {
 				if (thisCityKey in self.loadedCities) {
 
 					self.optionCities.push(self.loadedCities[thisCityKey]);
+					self.optionCountries.sort();
 				}
 				else {
 
@@ -302,6 +307,7 @@ var ViewModel = function () {
 							var thisCity = new City(dataJSON);
 							self.loadedCities[thisCityKey] = thisCity;
 							self.optionCities.push(thisCity);
+							self.optionCountries.sort();
 						}).error(function(error) {
 
 							$("#googlemaploadinggif").addClass("displaynone");
@@ -332,6 +338,7 @@ var ViewModel = function () {
 				if (thisNeighborhoodKey in self.loadedNeighborhoods) {
 
 					self.optionNeighborhoods.push(self.loadedNeighborhoods[thisNeighborhoodKey]);
+					self.optionNeighborhoods.sort();
 					self.displayGems(thisNeighborhoodKey);
 				}
 				else {
@@ -351,6 +358,7 @@ var ViewModel = function () {
 							var thisNeighborhood = new Neighborhood(dataJSON);
 							self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
 							self.optionNeighborhoods.push(thisNeighborhood);
+							self.optionNeighborhoods.sort();
 							self.displayGems(thisNeighborhoodKey);
 						}).error(function(error) {
 
@@ -444,6 +452,14 @@ var ViewModel = function () {
 			country = new Country(countriesJSON[i]);
 			self.loadedCountries[country["key"]()] = country;
 			self.optionCountries.push(country);
+			self.optionCountries.sort();
+
+			// to meet udacity requirements of "display at least 5 markers at start"
+			// remove for production
+			if (country.name() == "Thailand") {
+
+				self.selectedCountry(country);
+			}
 		}
 	};
 
@@ -454,6 +470,14 @@ var ViewModel = function () {
 			city = new City(citiesJSON[i]);
 			self.loadedCities[city["key"]()] = city;
 			self.optionCities.push(city);
+			self.optionCountries.sort();
+
+			// to meet udacity requirements of "display at least 5 markers at start"
+			// remove for production
+			if (city.name() == "Chiang Mai") {
+
+				self.selectedCity(city);
+			}
 		}
 	};
 
@@ -688,6 +712,7 @@ var ViewModel = function () {
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
 		self.populateLocale("country", "");
+		self.populateLocale("city", "");
 	})();
 }
 
@@ -701,16 +726,19 @@ function initMap() {
 
 	map = new google.maps.Map(document.getElementById('googlemap'), {
 	  	
-	  	center: {lat: 18.7061, lng: 98.9817},
+	  	center: {lat: 18.7869, lng: 98.9865}, // should be lat: 18.7061, lng: 98.9817 for production
 	  	scrollwheel: false,
-	  	zoom: 13
+	  	zoom: 15 // should be 13 for production
 	});
 
     directionsService = new google.maps.DirectionsService;
     directionsDisplay = new google.maps.DirectionsRenderer;
-	infoWindow = new google.maps.InfoWindow({map: map});
+	infoWindow = new google.maps.InfoWindow({map: null});
 
-	detectUserLocation();
+	//uncomment next line for production (this is commented to meet udacity requirements)
+	//detectUserLocation();
+
+
 
     directionsDisplay.setMap(map);
 }
@@ -720,6 +748,7 @@ function detectUserLocation () {
 
     if (navigator.geolocation) {
 
+		$("#googlemaploadinggif").removeClass("displaynone");
       	navigator.geolocation.getCurrentPosition(function(position) {
         	var pos = {
           		lat: position.coords.latitude,
@@ -729,6 +758,7 @@ function detectUserLocation () {
         	map.setCenter(pos);
         	map.setZoom(15);
 
+			$("#googlemaploadinggif").addClass("displaynone");
         	createAndRenderLocationMarker(map.getCenter());
       	}, function() {
         	
