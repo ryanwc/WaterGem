@@ -20,12 +20,12 @@ To run the website locally, you need to have both of the following installed: 1)
 
 1. Ensure you have Python 2.7 installed and active on your machine (don't use a higher version of Python -- you can download Python 2.7 from the [Python website](https://www.python.org/download/releases/2.7.4)).
 2. If you are working on a Linux or Mac OS X machine:
-    1. Download [the Mac/Linux version of the Google App Engine SDK for Python](https://storage.googleapis.com/appengine-sdks/featured/GoogleAppEngine-1.9.40.msi).
+    1. Download [the Mac/Linux version of the Google App Engine SDK for Python](https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.40.zip).
     2. Unzip the App Engine SDK file you downloaded (google_appengine_1.9.40.zip).  One way to do it is with the following command line command: `unzip google_appengine_1.9.40.zip`.  There is no App Engine installation script that you need to run after unzipping the files.
     3. Add the google_appengine directory to your PATH with the following command line command: `export PATH=$PATH:/path/to/google_appengine/
     4. Make sure Python 2.7 is installed on your machine using the following command line command: `/usr/bin/env python -V`.  The output should look like this: `Python 2.7.<number>`. If Python 2.7 isn't installed, install it now (as stated in the first step) using the installation instructions for your Mac/Linux distribution for Python 2.7 [here](https://www.python.org/download/releases/2.7.4).
 3. If you are working on a Windows Machine:
-    1. Download [the Windows version of the Google App Engine SDK for Python](https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.40.zip).
+    1. Download [the Windows version of the Google App Engine SDK for Python](https://storage.googleapis.com/appengine-sdks/featured/GoogleAppEngine-1.9.40.msi).
     2. Double-click the SDK file you downloaded (GoogleAppEngine-1.9.40.msi) and follow the prompts to install the SDK.
     3. You will need Python 2.7 to use the App Engine SDK, because the [Development Server](https://cloud.google.com/appengine/docs/php/tools/devserver) is a Python application. As stated in the first step above, you can download Python 2.7 [here](https://www.python.org/download/releases/2.7.4).
 4. Download all of the files in this repo into the same directory.
