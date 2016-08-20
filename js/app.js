@@ -641,7 +641,21 @@ var ViewModel = function () {
 
     self.setSelectedLocationWikiInfo = function(location) {
     	// load wikipedia links related to a location
-	    var wikiAjaxURL = "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
+
+    	// TO-DO: is there a better (more accurate/secure) way of determining 
+    	// whether the user is at the https or http version?
+    	// (wiki ajax call fails if user is at https and wiki ajax url is http)
+    	/*
+    	var currentURL = document.URL;
+    	var wikiAjaxURL;
+    	if (currentURL.substring(0, 5) == "https") {
+
+    		wikiAjaxURL = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
+    	}
+    	else {
+    	*/
+
+		wikiAjaxURL = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+location+"&prop=revisions|links&rvprop=content&callback=?";
 
 	    var titles = [];
 
@@ -661,7 +675,10 @@ var ViewModel = function () {
 
 	                    // instead of another ajax call to get pageid, 
 	                    // could probably link to directly
-	                    var thisArticleAjax = "http://en.wikipedia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
+	                    // TO-DO: why does this still give a mixed content error, thinking
+	                    // the below URL is http and not https? (even prints to console as http
+	                    // in the error message... really weird)
+	                    var thisArticleAjax = "https://en.wikipedia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
 	                    
 	                    $.ajax({
 	                        url: thisArticleAjax,
