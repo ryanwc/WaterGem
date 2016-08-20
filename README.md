@@ -36,9 +36,10 @@ To run the website locally, you need to have both of the following installed: 1)
 
 If you have trouble installing ths Google App Engine SDK for Python, you can view the documentation [here](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python).
 
-To visit the live website, go to the following address:
+To visit the live website, go to one of the following addresses:
 
-[water-gem.appspot.com/home]
+1. For the secure website that allows location services (e.g., finding your location and getting directions), go to: [https://water-gem.appspot.com/home]
+2. For the unsecured website that does not allow location services, go to: [http://water-gem.appspot.com/home]
 
 Any feedback about your experience using the app is welcome.  Please send feedback to [ryanwc13@gmail.com](mailto:ryanwc13@gmail.com).
 

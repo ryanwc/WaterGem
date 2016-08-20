@@ -31,10 +31,15 @@
 	<!-- end filtering/seletion -->
 
 	<!-- list view to meet udacity requirements -->
-	<div id="listviewdiv" data-bind="foreach: displayedGemMarkers">
-		<!-- ko if: $data.isDisplayed -->
-		<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
-		<!-- /ko -->
+	<div id="listviewdiv">
+		<div id="listviewheader">
+			List of Gems in Selected Location
+		</div>
+		<div id="listviewlist" data-bind="foreach: displayedGemMarkers">
+			<!-- ko if: $data.isDisplayed -->
+			<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
+			<!-- /ko -->
+		</div>
 	</div>
 	<!-- end list view -->
 

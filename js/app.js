@@ -675,9 +675,6 @@ var ViewModel = function () {
 
 	                    // instead of another ajax call to get pageid, 
 	                    // could probably link to directly
-	                    // TO-DO: why does this still give a mixed content error, thinking
-	                    // the below URL is http and not https? (even prints to console as http
-	                    // in the error message... really weird)
 	                    var thisArticleAjax = "https://en.wikipedia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
 	                    
 	                    $.ajax({
