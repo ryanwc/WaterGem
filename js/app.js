@@ -703,6 +703,7 @@ var ViewModel = function () {
 	        }
 	    }).fail(function(error) {
 
+			$("#wikiinfoloadinggif").addClass("displaynone");
 	        window.alert("Error retrieving Wikipedia links");
 	    });
     };

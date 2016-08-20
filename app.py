@@ -1244,7 +1244,9 @@ class GetInstanceByKey(Handler):
 
 
 app = webapp2.WSGIApplication(
-		[webapp2.Route("/home", handler=Home, name="index"),
+		[webapp2.Route("/", handler=Home, name="index"),
+		 webapp2.Route("/home", handler=Home, name="index"),
+		 webapp2.Route("/home/", handler=Home, name="index"),
 		 webapp2.Route("/about", handler=About, name="about"),
 		 webapp2.Route("/register", handler=Register, name="register"),
 		 webapp2.Route("/signin", handler=Signin, name="signin"),
