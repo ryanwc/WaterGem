@@ -36,9 +36,20 @@
 		<div id="listviewheader">
 
 			<!-- ko if: selectedCity -->
-			List of all <span data-bind="text: selectedLocationNumDisplayedGems"></span> gems in <span data-bind="text: selectedLocationName"></span>
+				<!-- ko if: selectedLocationNumDisplayedGems() < 1 -->
+				No gems in <span data-bind="text: selectedLocationName"></span>
+				<!-- /ko -->
+
+				<!-- ko if: selectedLocationNumDisplayedGems() == 1 -->
+				List containing the single gem in <span data-bind="text: selectedLocationName"></span>
+				<!-- /ko -->
+
+				<!-- ko if: selectedLocationNumDisplayedGems() > 1 -->
+				List of all <span data-bind="text: selectedLocationNumDisplayedGems"></span> gems in <span data-bind="text: selectedLocationName"></span>
+				<!-- /ko -->
+
 				<!-- ko if: showingDirections -->
-				<span>(List filtered to show only selected gem with directions)</span>
+				<span>(filtered to just the gem with displayed directions)</span>
 				<!-- /ko -->
 			<!-- /ko -->
 
