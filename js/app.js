@@ -20,7 +20,7 @@ window.onresize = function(event) {
 
 /*
 *
-*	Global Google Map API vars that need to be accessed by the rest of the program
+*	Helpful global vars
 *
 */
 
@@ -29,6 +29,7 @@ var infoWindow;
 var directionsService;
 var directionsDisplay;
 var yourLocationMarker;
+var viewModel;
 
 /*
 *
@@ -72,6 +73,7 @@ var GemMarker = function (data) {
 	else {
 
 		self.marker = null;
+		window.alert("gem marker created without google map api marker");
 	}
 }
 
@@ -176,6 +178,9 @@ var ViewModel = function () {
 	self.optionCities = ko.observableArray([]);
 	self.optionNeighborhoods = ko.observableArray([]);
 
+	self.googleMapIsLoaded = ko.observable((function() {
+		return (typeof google === 'object' && typeof google.maps === 'object')? true : false;
+	}));
 	// holds Markers (with data as gem and marker as google api marker)
 	self.displayedGemMarkers = ko.observableArray([]);
 
@@ -272,6 +277,17 @@ var ViewModel = function () {
 	*/
 
 	// TO-DO: improve inefficient alphabetical sort of dropdowns after every change
+
+	self.googleMapIsLoaded.subscribe(function(newSelection) {
+
+		console.log("google map status changed");
+		console.log((typeof google === 'object' && typeof google.maps === 'object'));
+
+		if (newSelection) {
+
+			self.ensureGemMarkersHaveMarker();
+		}
+	});
 
 	self.showingDirections.subscribe(function(newSelection) {
 
@@ -694,6 +710,39 @@ var ViewModel = function () {
 	/* Third Party API Related
 	*/
 
+	self.ensureGemMarkersHaveMarker = function() {
+		// useful if async google map api load finished after GemMarkers are created
+
+		var thisGemMarker;
+
+		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
+
+			thisGemMarker = self.displayedGemMarkers()[i];
+			
+			if (!thisGemMarker.marker) {
+				// candidate for re-factor -- use same code to create a gem elsewhere
+
+				var thisGem = self.loadedGems[self.displayedGemMarkers()[i].gemKey];
+				var coords = thisGem.location().split(",");
+
+				thisGemMarker.marker = new google.maps.Marker({
+
+					position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
+					map: map,
+					animation: google.maps.Animation.DROP,
+					title: thisGem.name()
+				});
+
+				thisGemMarker.marker.addListener("click", 
+					function(gemMarker) {
+						 
+						return function() {self.toggleGemMarker(gemMarker)};
+					}(thisGemMarker)
+				);
+			}
+		}
+	};
+
 	self.setCurrentGoogleMapLocation = function () {
 
 		detectUserLocation();
@@ -879,6 +928,8 @@ var ViewModel = function () {
 function initMap() {
 
 	// check if Google Map api called failed
+	console.log(typeof google);
+	console.log(typeof google.maps);
 	if (typeof google != 'object' && typeof google.maps != 'object') {
 
 		window.alert("Google Map failed to load.");
@@ -899,9 +950,13 @@ function initMap() {
 	//uncomment next line for production (this is commented to meet udacity requirements)
 	//detectUserLocation();
 
-
-
     directionsDisplay.setMap(map);
+
+    // tell the view model the google map has been loaded so gems can be connected to markers
+    if (typeof viewModel != "undefined") {
+
+    	viewModel.googleMapIsLoaded(true);
+    }
 }
 
 function detectUserLocation () {
@@ -1036,11 +1091,32 @@ function setLocationLoadingPosition() {
 	$("#googlemaploadinggif").css({"top":"-"+heightOffset+"px"});
 }
 
+function alertUserOfError(errorMessage) {
+
+	window.alert(errorMessage);
+}
+
 /*
 *
 *	Initialize and run the app
 *
 */
 // enable the KnockoutJS framework
-ko.applyBindings(new ViewModel);
+viewModel = new ViewModel;
+ko.applyBindings(viewModel);
+
+/*
+
+problem: 
+
+factors:
+1. GemMarkers are created with google marker from google api as a property
+2. Google api might not be loaded yet when GemMarkers are made 
+(e.g., if app init sets selections, GemMarkers might be created before map api loads)
+
+therefore: GemMarkers might not function properly (clicks, display).
+
+solution:
+
+*/
 

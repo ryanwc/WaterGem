@@ -37,7 +37,7 @@
 
 			<!-- ko if: selectedCity -->
 				<!-- ko if: selectedLocationNumDisplayedGems() < 1 -->
-				No gems in <span data-bind="text: selectedLocationName"></span>
+				No gems found yet in <span data-bind="text: selectedLocationName"></span>
 				<!-- /ko -->
 
 				<!-- ko if: selectedLocationNumDisplayedGems() == 1 -->
@@ -54,16 +54,11 @@
 			<!-- /ko -->
 
 			<!-- ko ifnot: selectedCity -->
-				Make some selections to find gems
+				No gems to display yet; make some more selections.
 			<!-- /ko -->
 
 		</div>
 		<div id="listviewlist">
-			<!-- ko if: displayedGemMarkers().length < 1 -->
-			<div class="nonetodisplaymessage" id="narrowselectionmessage">
-				No gems to display yet; make some more selections.
-			</div>
-			<!-- /ko -->
 			<!-- ko if: selectedLocationNumDisplayedGems() > 0 -->
 				<!-- ko foreach: displayedGemMarkers -->
 					<!-- ko if: $data.isDisplayed -->
@@ -213,6 +208,6 @@
 	<script src="bower_components/jquery.js"></script>
 	<script src="bower_components/knockout.js"></script>		
 	<script src="js/app.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6Og92aUD75aW9vxng8igWUKrjCJXT-U&libraries=places&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6Og92aUD75aW9vxng8igWUKrjCJXT-U&libraries=places&callback=initMap" async defer onerror=alertUserOfError("The Google Map failed to load, so you won't bee able to see locations of any gems."></script>
 
 {% endblock %}
