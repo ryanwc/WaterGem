@@ -105,12 +105,9 @@ body {
 }
 
 .geminfowindowdiv {
-	width: 300px;
-	overflow: scroll;
-}
-
-.geminfowindowdiv {
 	text-align: left;
+	max-width: 250px;
+	overflow: scroll;
 }
 
 .geminfowindowimg {

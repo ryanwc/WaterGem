@@ -120,9 +120,11 @@
 				<!-- /ko -->
 				<!-- ko if: notes -->
 				<span>Notes: <span data-bind="text: notes"></span></span>
+				<br>
 				<!-- /ko -->
 				<!-- ko if: !picture -->
-				<span>No picture yet.</span>	
+				<span>No picture yet.</span>
+				<br>	
 				<!-- /ko -->
 				<button class="getdirectionsbutton" type="button">show walking path</button>
 			</div>
@@ -208,6 +210,6 @@
 	<script src="bower_components/jquery.js"></script>
 	<script src="bower_components/knockout.js"></script>		
 	<script src="js/app.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6Og92aUD75aW9vxng8igWUKrjCJXT-U&libraries=places&callback=initMap" async defer onerror=alertUserOfError("The Google Map failed to load, so you won't bee able to see locations of any gems."></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6Og92aUD75aW9vxng8igWUKrjCJXT-U&libraries=places&callback=initMap" async defer onerror="alertUserOfError('The Google Map failed to load, so you will not see locations of any gems.');"></script>
 
 {% endblock %}

@@ -169,6 +169,10 @@ var ViewModel = function () {
 	self.loadedNeighborhoods = {};
 	self.loadedGems = {};
 
+	// track all currently executing ajax requests
+	self.currentAjaxCalls = {"country":{},"city":{},"neighborhood":{},"gem":{},
+							 "wiki":{}, "nytimes":{},"google":{}};
+
 	// track current user selections
 	self.selectedGem = ko.observable();
 	self.selectedNeighborhood = ko.observable();
@@ -186,19 +190,7 @@ var ViewModel = function () {
 	// holds Markers (with data as gem and marker as google api marker)
 	self.displayedGemMarkers = ko.observableArray([]);
 
-	// TO-DO: think about: maybe other properties could be computed observables instead of 
-	// using below functions, not sure what would be better.
-	self.selectedLocationNumDisplayedGems = ko.computed(function() {
-
-		if (typeof self.selectedNeighborhood() != "undefined") {
-
-			return self.selectedNeighborhood().gems().length;
-		}
-		else {
-			// remember, this will be 0 if only a country is selected
-			return self.displayedGemMarkers().length;
-		}
-    }, self);
+	self.selectedLocationNumDisplayedGems = ko.observable("N/A") 
 
 	// holds wiki and nyt info for selected location
 	self.selectedLocationWikiInfo = ko.observableArray([]);
@@ -255,6 +247,57 @@ var ViewModel = function () {
 
 	/* helpers
 	*/
+
+	self.setNumDisplayedGems = function () {
+
+		if (typeof self.selectedNeighborhood() != "undefined") {
+
+			self.selectedLocationNumDisplayedGems(self.selectedNeighborhood().gems().length);
+		}
+		else if (typeof self.selectedCity() != "undefined") {
+
+			var numCityGems = 0;
+
+			for (var i = 0; i < self.selectedCity().neighborhoods().length; i++) {
+
+				var thisNeighborhoodKey = self.selectedCity().neighborhoods()[i];
+				var neighborhood = self.loadedNeighborhoods[thisNeighborhoodKey];
+
+				// maybe it's not loaded yet
+				if (neighborhood) {
+
+					numCityGems += neighborhood.gems().length;
+				}
+			}
+
+			self.selectedLocationNumDisplayedGems(numCityGems);
+		}
+		else {
+
+			self.selectedLocationNumDisplayedGems("N/A");
+		}
+    };
+
+	self.abortAjaxCalls = function (type) {
+
+		if (type == "country" || type == "city" || type == "neighborhood" || 
+			type == "gem" || type == "wiki" || type == "nytimes" || type == "google") {
+
+			for (var key in self.currentAjaxCalls[type]) {
+
+				if (typeof key == "") {
+
+					self.abortAjaxCall(self.currentAjaxCalls[type][key]);
+					delete self.currentAjaxCalls[type][key];
+				}
+			}
+		}
+	}
+
+	self.abortAjaxCall = function (jqXHRObject) {
+
+		jqXHRObject.abort();
+	}
 
 	self.getLoadedGemName = function (gemKey) {
 
@@ -331,6 +374,12 @@ var ViewModel = function () {
 
 	self.selectedCountry.subscribe(function(newSelection) {
 
+		self.abortAjaxCalls("city");
+		self.abortAjaxCalls("neighborhood");
+		self.abortAjaxCalls("gem");
+		self.abortAjaxCalls("wiki");
+		self.abortAjaxCalls("nytimes");
+
     	self.filterCities();
     	self.resetOptions("neighborhood");
     	self.destroyDisplayedGemMarkers();
@@ -340,9 +389,16 @@ var ViewModel = function () {
     	if (newSelection) {
     		//map.setCenter(newSelection.location());
     	}
+
+    	self.setNumDisplayedGems();
 	});
 
 	self.selectedCity.subscribe(function(newSelection) {
+
+		self.abortAjaxCalls("neighborhood");
+		self.abortAjaxCalls("gem");
+		self.abortAjaxCalls("wiki");
+		self.abortAjaxCalls("nytimes");
 
     	self.destroyDisplayedGemMarkers();
 		self.filterNeighborhoods();
@@ -353,9 +409,15 @@ var ViewModel = function () {
 
     		//map.setCenter(newSelection.location());
     	}
+
+    	self.setNumDisplayedGems();
 	});
 
 	self.selectedNeighborhood.subscribe(function(newSelection) {
+
+		self.abortAjaxCalls("gem");
+		self.abortAjaxCalls("wiki");
+		self.abortAjaxCalls("nytimes");
 
     	self.showingDirections(false);
 
@@ -369,6 +431,8 @@ var ViewModel = function () {
 
     		self.filterNeighborhoods();
     	}
+
+    	self.setNumDisplayedGems();
 	});
 
 	/* Modify options based on selections
@@ -384,6 +448,8 @@ var ViewModel = function () {
 
 			self.optionNeighborhoods.removeAll();
 		}
+
+		self.setNumDisplayedGems();
 	}
 
 	// maybe i could pass a singular ajax call a callback function instead of re-typing?
@@ -415,7 +481,7 @@ var ViewModel = function () {
 					$("#googlemaploadinggif").removeClass("displaynone");
 					(function(thisCityKey) {
 
-						$.ajax({
+						var ajaxCityCall = $.ajax({
 							type: "GET",
 							url: "/GetByKey",
 							headers: {"key":thisCityKey}
@@ -437,6 +503,12 @@ var ViewModel = function () {
 
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving cities from the server");
+						});
+
+						self.currentAjaxCalls["city"][ajaxCityCall] = true;
+						ajaxCityCall.complete(function() {
+
+							delete self.currentAjaxCalls["city"][ajaxCityCall];
 						});
 					})(thisCityKey);
 				}
@@ -471,7 +543,7 @@ var ViewModel = function () {
 					$("#googlemaploadinggif").removeClass("displaynone");
 					(function(thisNeighborhoodKey) {
 
-						$.ajax({
+						var ajaxNeighborhoodCall = $.ajax({
 							type: "GET",
 							url: "/GetByKey",
 							headers: {"key":thisNeighborhoodKey}
@@ -482,6 +554,10 @@ var ViewModel = function () {
 							// add neighborhood to loaded neighborhoods, add to options, then display gems
 							var thisNeighborhood = new Neighborhood(dataJSON);
 							self.loadedNeighborhoods[thisNeighborhoodKey] = thisNeighborhood;
+
+							//next line could be more efficient if use observable
+							self.setNumDisplayedGems();
+
 							self.optionNeighborhoods.push(thisNeighborhood);
 							self.optionNeighborhoods.sort();
 							self.displayGems(thisNeighborhoodKey);
@@ -490,6 +566,13 @@ var ViewModel = function () {
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving neighborhoods from the server");
 						});
+						console.log(ajaxNeighborhoodCall);
+						self.currentAjaxCalls["neighborhood"][ajaxNeighborhoodCall] = true;
+						console.log(self.currentAjaxCalls);
+						ajaxNeighborhoodCall.complete(function() {
+
+	    					delete self.currentAjaxCalls["neighborhood"][ajaxNeighborhoodCall];
+	    				});
 					})(thisNeighborhoodKey);
 				}
 			}
@@ -530,7 +613,7 @@ var ViewModel = function () {
 
 				(function(thisGemKey) {
 
-					$.ajax({
+					var ajaxGemCall = $.ajax({
 						type: "GET",
 						url: "/GetByKey",
 						headers: {"key":thisGemKey}
@@ -562,18 +645,25 @@ var ViewModel = function () {
 						$("#googlemaploadinggif").addClass("displaynone");
 						window.alert("Error retrieving gems from the server");
 					});
+
+					self.currentAjaxCalls["gem"][ajaxGemCall] = true;
+					ajaxGemCall.complete(function() {
+
+	    				delete self.currentAjaxCalls["gem"][ajaxGemCall];
+	    			});
 				})(thisGemKey);
 			}
 		}
 	};
 
 	self.filterGems = function (neighborhoodKey) {
-		// if selecting neighborhood, 
-		// we know all of the gems in this city are displayed already
+		// filter gems by selected neighborhood
+
 		var displayedGemMarker;
 		var displayedGemKey;
 		var displayedGem;
 
+		// take care of any gems that have already been loaded
 		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
 
 			displayedGemMarker = self.displayedGemMarkers()[i];
@@ -597,6 +687,63 @@ var ViewModel = function () {
 				}
 				
 				displayedGemMarker.isDisplayed(false);
+			}
+		}
+
+		// take care of any stragglers that were not loaded due to aborting ajax calls
+		// because of quick user selections (remember, newly created gems are automatically displayed)
+
+		var neighborhood = self.loadedNeighborhoods[neighborhoodKey];
+
+		for (var i = 0; i < neighborhood.gems().length; i++) {
+
+			var thisGemKey = neighborhood.gems()[i];
+			
+			if (!(thisGemKey in self.loadedGems)) {
+				// TO-DO: refactor with other similar calls
+
+				$("#googlemaploadinggif").removeClass("displaynone");
+				(function(thisGemKey) {
+
+					var ajaxGemCall = $.ajax({
+						type: "GET",
+						url: "/GetByKey",
+						headers: {"key":thisGemKey}
+					}).done(function(data) {
+						
+						$("#googlemaploadinggif").addClass("displaynone");
+						var dataJSON = JSON.parse(data);
+						dataJSON["neighborhoodName"] = neighborhood.name();
+						// add gem to loaded gems, then to displayed gems
+						var newGem = new Gem(dataJSON);
+
+						setTimeout(function(){self.setGemNameOnServer(newGem);}, 2000);
+
+						self.loadedGems[newGem["key"]()] = newGem;
+						var thisGemMarker = new GemMarker(newGem);
+
+						if (thisGemMarker.marker) {
+
+							thisGemMarker.marker.addListener("click", 
+								function(gemMarker) {
+									 
+									return function() {self.toggleGemMarker(gemMarker)};
+								}(thisGemMarker)
+							);
+						}
+						self.displayedGemMarkers.push(thisGemMarker);
+					}).fail(function(error) {
+
+						$("#googlemaploadinggif").addClass("displaynone");
+						window.alert("Error retrieving gems from the server");
+					});
+
+					self.currentAjaxCalls["gem"][ajaxGemCall] = true;
+					ajaxGemCall.complete(function() {
+
+	    				delete self.currentAjaxCalls["gem"][ajaxGemCall];
+	    			});
+				})(thisGemKey);	
 			}
 		}
 	}
@@ -649,32 +796,31 @@ var ViewModel = function () {
 		}
 	};
 
-	self.populateLocale = function(kind, pythonDictParamString) {
-		// ajax query to server for initial select options locales (e.g., countries, cities)
-		// if have many more countries, mofify to only populate cities by country select
+	self.populateInitialCountries = function(pythonDictParamString) {
+		// ajax query to server for initial country
+
 		$("#googlemaploadinggif").removeClass("displaynone");
-		$.ajax({
+		var ajaxCountryCall = $.ajax({
 			type: "GET",
 			url: "/GetLocales",
-			headers: {"Kind":kind, "Queryparams":pythonDictParamString}
+			headers: {"Kind":"country", "Queryparams":pythonDictParamString}
 		}).done(function(data) {
 			
 			$("#googlemaploadinggif").addClass("displaynone");
 			var dataJSON = JSON.parse(data);
 
-			if (kind == "country") {
-
-				self.populateCountries(dataJSON);
-			}
-			else if (kind == "city") {
-
-				self.populateCities(dataJSON);
-			}
+			self.populateCountries(dataJSON);
 		}).fail(function(error) {
 
 			$("#googlemaploadinggif").addClass("displaynone");
 			window.alert("Error retrieving data from the server");
 		});
+
+		self.currentAjaxCalls["country"][ajaxCountryCall] = true;
+		ajaxCountryCall.complete(function() {
+
+	    	delete self.currentAjaxCalls["country"][ajaxCountryCall];
+	    });
 	};
 
 	self.toggleGemMarker = function (gemMarker) {
@@ -754,7 +900,7 @@ var ViewModel = function () {
 
 						// set on server for good
 						(function(thisGemKey) {
-							$.ajax({
+							var ajaxGemCall = $.ajax({
 								type: "GET",
 								url: "/SetGemName",
 								headers: {"key":thisGemKey, "newName": encodeURIComponent(newName)}
@@ -764,6 +910,11 @@ var ViewModel = function () {
 
 								window.alert("Failed to put new name in server");
 							});
+							self.currentAjaxCalls["gem"][ajaxGemCall] = true;
+							ajaxGemCall.complete(function() {
+
+	    						delete self.currentAjaxCalls["gem"][ajaxGemCall];
+	    					});
 						})(gem.key());					
 					} 
 					else {
@@ -878,7 +1029,7 @@ var ViewModel = function () {
 
 		$("#wikiinfoloadinggif").removeClass("displaynone");
 	    // get the titles
-	    $.ajax({
+	    var ajaxWikiCall = $.ajax({
 	        url: wikiAjaxURL,
 	        dataType: "json",
 	        type: "GET",
@@ -937,6 +1088,11 @@ var ViewModel = function () {
 			$("#wikiinfoloadinggif").addClass("displaynone");
 	        window.alert("Error retrieving Wikipedia links");
 	    });
+	    self.currentAjaxCalls["wiki"][ajaxWikiCall] = true;
+	    ajaxWikiCall.complete(function() {
+
+	    	delete self.currentAjaxCalls["wiki"][ajaxWikiCall];
+	    });
     };
 
     self.setSelectedLocationNYTimesInfo = function(location) {
@@ -949,7 +1105,7 @@ var ViewModel = function () {
 	    nyTimesArticleAjaxURL = nyTimesArticleAjaxURL+nyTimesArticleAjaxQuery+"&"+nyTimesAPIKey;
 
 		$("#nytimesinfoloadinggif").removeClass("displaynone");
-	    $.getJSON(nyTimesArticleAjaxURL, function(data) {  
+	    var ajaxNYTimesCall = $.getJSON(nyTimesArticleAjaxURL, function(data) {  
 
 			$("#nytimesinfoloadinggif").addClass("displaynone");
 	        articles = data.response.docs;
@@ -976,6 +1132,12 @@ var ViewModel = function () {
 			$("#nytimesinfoloadinggif").addClass("displaynone");
 	        window.alert("Error retrieving NY Times articles");
 	    });
+
+	    self.currentAjaxCalls["nytimes"][ajaxNYTimesCall] = true;
+	    ajaxNYTimesCall.complete(function() {
+
+	    	delete self.currentAjaxCalls["nytimes"][ajaxNYTimesCall];
+	    });
     };
 
     /* Initialization
@@ -984,7 +1146,7 @@ var ViewModel = function () {
 
 		// if more than one country, should not populate cities at start
 		// so do not have to set country upon city selection by user
-		self.populateLocale("country", "");
+		self.populateInitialCountries("");
 	})();
 }
 
