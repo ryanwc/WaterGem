@@ -566,7 +566,7 @@ var ViewModel = function () {
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving neighborhoods from the server");
 						});
-						
+
 						self.currentAjaxCalls["neighborhood"][ajaxNeighborhoodCall] = true;
 						ajaxNeighborhoodCall.complete(function() {
 
@@ -890,7 +890,7 @@ var ViewModel = function () {
 							newName += number + " " + lessSpecific;
 						}
 						else {
-
+							//test comment!
 							newName += results[0]["address_components"][0]["long_name"];
 						}
 
