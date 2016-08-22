@@ -31,6 +31,8 @@ var directionsDisplay;
 var geocoder;
 var yourLocationMarker;
 var viewModel;
+var chiangMaiLatLon = {lat: 18.7869, lng: 98.9865};
+var bangkokLatLon = {lat: 13.7563, lng: 100.5018};
 
 /*
 *
@@ -407,7 +409,17 @@ var ViewModel = function () {
 
     	if (newSelection) {
 
-    		//map.setCenter(newSelection.location());
+    		console.log(newSelection);
+    		if (newSelection.name() == "Chiang Mai") {
+
+    			map.setCenter(chiangMaiLatLon);
+       			map.setZoom(13);
+    		}
+    		else if (newSelection.name() == "Bangkok") {
+
+    			map.setCenter(bangkokLatLon);
+    			map.setZoom(12);
+    		}
     	}
 
     	self.setNumDisplayedGems();
@@ -1166,9 +1178,9 @@ function initMap() {
 
 	map = new google.maps.Map(document.getElementById('googlemap'), {
 	  	
-	  	center: {lat: 18.7869, lng: 98.9865}, // should be lat: 18.7061, lng: 98.9817 for production
+	  	center: chiangMaiLatLon, // TO-DO: change for production?
 	  	scrollwheel: false,
-	  	zoom: 15 // should be 13 for production
+	  	zoom: 13
 	});
 
     directionsService = new google.maps.DirectionsService;
