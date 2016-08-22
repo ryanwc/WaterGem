@@ -566,9 +566,8 @@ var ViewModel = function () {
 							$("#googlemaploadinggif").addClass("displaynone");
 							window.alert("Error retrieving neighborhoods from the server");
 						});
-						console.log(ajaxNeighborhoodCall);
+						
 						self.currentAjaxCalls["neighborhood"][ajaxNeighborhoodCall] = true;
-						console.log(self.currentAjaxCalls);
 						ajaxNeighborhoodCall.complete(function() {
 
 	    					delete self.currentAjaxCalls["neighborhood"][ajaxNeighborhoodCall];
