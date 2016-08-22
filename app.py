@@ -1299,6 +1299,7 @@ class SetGemName(Handler):
 			gem.put()
 			return self.response.write(json.dumps("sucess!"))
 		else:
+			
 			return self.response.write(json.dumps("gem was not found"))
 
 app = webapp2.WSGIApplication(

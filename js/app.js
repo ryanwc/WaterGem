@@ -82,8 +82,8 @@ var Gem = function (data) {
 
 	var self = this;
 
-	// data from server
-	self.name = ko.observable(data["name"]);
+	// data from server -- decode
+	self.name = ko.observable(decodeURIComponent(data["name"]));
 	
 	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
@@ -287,8 +287,6 @@ var ViewModel = function () {
 
 	self.googleMapIsLoaded.subscribe(function(newSelection) {
 
-		console.log((typeof google === 'object' && typeof google.maps === 'object'));
-
 		if (newSelection) {
 
 			self.ensureGemMarkersHaveMarker();
@@ -323,7 +321,6 @@ var ViewModel = function () {
 
 					self.displayedGemMarkers()[i].marker.setMap(map);
 					self.displayedGemMarkers()[i].isDisplayed(true);
-					console.log(thisGem.name());
 				}
 			}
 			
@@ -591,7 +588,6 @@ var ViewModel = function () {
 				}
 				
 				displayedGemMarker.isDisplayed(true);
-				console.log(displayedGem.name());
 			}
 			else {
 
@@ -727,27 +723,23 @@ var ViewModel = function () {
 
 		if (gem.name() == "Generic Gem") {
 
-			console.log(gem.location() + " had generic name, so getting name from reverse geocoding");
 			var latlngStr = gem.location().split(',');
 			var latlng = {lat: parseFloat(latlngStr[0]), lng: parseFloat(latlngStr[1])};
 
-			geocoder.geocode({'location': latlng}, function(results, status) {
+			// TO-DO: change language based on user language
+			geocoder.geocode({'location': latlng, 'language':"en"}, function(results, status) {
 
 				if (status === 'OK') {
 					
 					if (results[0] && results[0]["address_components"][0]) {
 
-						console.log(results[0]);
-
 						var number;
 						var lessSpecific;
 						var newName = "Gem near ";
 
-						console.log("types are " + results[0]["address_components"][0]["types"]);
 						// assumes if there is a number, there is also at least one less specific
 						if (results[0]["address_components"][0]["types"].includes("street_number")) {
 
-							console.log("has street number");
 							number = results[0]["address_components"][0]["long_name"];
 							lessSpecific = results[0]["address_components"][1]["long_name"];
 							newName += number + " " + lessSpecific;
@@ -758,21 +750,16 @@ var ViewModel = function () {
 						}
 
 						// set the name for this client instance
-						console.log(gem.location() + " ended up as " + newName);
-
 						gem.name(newName);
-						console.log(gem.name())
 
 						// set on server for good
 						(function(thisGemKey) {
-
 							$.ajax({
 								type: "GET",
 								url: "/SetGemName",
-								headers: {"key":thisGemKey, "newName": newName}
+								headers: {"key":thisGemKey, "newName": encodeURIComponent(newName)}
 							}).done(function(response) {
 
-								console.log(response);
 							}).fail(function(error) {
 
 								window.alert("Failed to put new name in server");
