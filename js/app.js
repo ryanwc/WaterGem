@@ -58,13 +58,21 @@ var GemMarker = function (data) {
 	self.isDisplayed = ko.observable(true);
 
 	// marker is not a knockout observable
-	self.marker = new google.maps.Marker({
+	// check if google map is there before making
+	if (typeof google === 'object' && typeof google.maps === 'object') {
 
-		position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
-		map: map,
-		animation: google.maps.Animation.DROP,
-		title: data["name"]()
-	});
+		self.marker = new google.maps.Marker({
+
+			position: {lat: parseFloat(coords[0]), lng: parseFloat(coords[1])},
+			map: map,
+			animation: google.maps.Animation.DROP,
+			title: data["name"]()
+		});
+	}
+	else {
+
+		self.marker = null;
+	}
 }
 
 var Gem = function (data) {
@@ -171,10 +179,70 @@ var ViewModel = function () {
 	// holds Markers (with data as gem and marker as google api marker)
 	self.displayedGemMarkers = ko.observableArray([]);
 
+	// TO-DO: think about: maybe other properties could be computed observables instead of 
+	// using below functions, not sure what would be better.
+	self.selectedLocationNumDisplayedGems = ko.computed(function() {
+
+		if (typeof self.selectedNeighborhood() != "undefined") {
+
+			return self.selectedNeighborhood().gems().length;
+		}
+		else {
+			// remember, this will be 0 if only a country is selected
+			return self.displayedGemMarkers().length;
+		}
+    }, self);
+
 	// holds wiki and nyt info for selected location
 	self.selectedLocationWikiInfo = ko.observableArray([]);
 	self.selectedLocationNYTimesInfo = ko.observableArray([]);
-	self.selectedLocationName = ko.observable("[select location]");
+
+	self.selectedLocationName = ko.computed(function() {
+
+		// to make the logic easier to read
+		var countryIsSelected = (typeof self.selectedCountry() != 'undefined');
+		var cityIsSelected = (typeof self.selectedCity() != 'undefined');
+		var neighborhoodIsSelected = (typeof self.selectedNeighborhood() != 'undefined');
+
+    	if (neighborhoodIsSelected) {
+
+    		if (cityIsSelected && countryIsSelected) {
+
+    			return self.selectedNeighborhood().name() + ", " + self.selectedCity().name() + ", " + self.selectedCountry().name();
+    		}
+    		else if (cityIsSelected) {
+
+    			return self.selectedNeighborhood().name() + ", " + self.selectedCity().name();
+    		}
+    		else if (countryIsSelected) {
+
+    			return self.selectedNeighborhood().name() + ", " + self.selectedCountry().name();
+    		}
+    		else {
+
+    			return self.selectedNeighborhood().name();
+    		}
+    	}
+    	else if (cityIsSelected) {
+
+    		if (countryIsSelected) {
+  			
+    			return self.selectedCity().name() + ", " + self.selectedCountry().name();
+    		}
+    		else {
+
+        		return self.selectedCity().name();			
+    		}
+    	}
+    	else if (typeof self.selectedCountry() != 'undefined') {
+
+    		return self.selectedCountry().name();
+    	}
+    	else {
+
+    		return "[select location]";
+    	}
+	}, self);
 
 	self.showingDirections = ko.observable(false);
 
@@ -189,7 +257,15 @@ var ViewModel = function () {
 	self.clickGemFromListView = function (clickedGemMarker) {
 
 		infoWindow.close();
-		new google.maps.event.trigger(clickedGemMarker.marker, 'click' );
+
+		if (clickedGemMarker.marker) {
+
+			new google.maps.event.trigger(clickedGemMarker.marker, 'click');
+		}
+		else {
+
+			window.alert("Google Map was not loaded correctly, so there's nothing to show.");
+		}
 	};
 
 	/* Custom listeners for selection changes
@@ -214,10 +290,18 @@ var ViewModel = function () {
 		else {
 
 			for (var i = 0; i < self.displayedGemMarkers().length; i++) {
-					
-				// should probaby only display if was displayed before
-				self.displayedGemMarkers()[i].marker.setMap(map);
-				self.displayedGemMarkers()[i].isDisplayed(true);
+				
+				var thisGem = self.loadedGems[self.displayedGemMarkers()[i].gemKey];
+
+				// display only if within current selection
+				if (typeof self.selectedNeighborhood() == "undefined" ||
+					(thisGem.neighborhood()[0][0] == self.selectedNeighborhood().key()[0] &&
+					 thisGem.neighborhood()[0][1] == self.selectedNeighborhood().key()[1])) {
+
+
+					self.displayedGemMarkers()[i].marker.setMap(map);
+					self.displayedGemMarkers()[i].isDisplayed(true);
+				}
 			}
 			
 			directionsDisplay.setMap(null);
@@ -408,12 +492,16 @@ var ViewModel = function () {
 				// cant put this after if because need to do it inside async ajax call below
 				// probably could use refactoring
 				var thisGemMarker = new GemMarker(thisGem, self.loadedNeighborhoods[neighborhoodKey]["name"]);
-				thisGemMarker.marker.addListener("click", 
-					function(gemMarker) {
-						 
-						return function() {self.toggleGemMarker(gemMarker)};
-					}(thisGemMarker)
-				);
+				
+				if (thisGemMarker.marker) {
+
+					thisGemMarker.marker.addListener("click", 
+						function(gemMarker) {
+							
+							return function() {self.toggleGemMarker(gemMarker)};
+						}(thisGemMarker)
+					);
+				}
 				self.displayedGemMarkers.push(thisGemMarker);
 			}
 			else {
@@ -435,12 +523,16 @@ var ViewModel = function () {
 						var newGem = new Gem(dataJSON);
 						self.loadedGems[newGem["key"]()] = newGem;
 						var thisGemMarker = new GemMarker(newGem);
-						thisGemMarker.marker.addListener("click", 
-							function(gemMarker) {
-								 
-								return function() {self.toggleGemMarker(gemMarker)};
-							}(thisGemMarker)
-						);
+
+						if (thisGemMarker.marker) {
+
+							thisGemMarker.marker.addListener("click", 
+								function(gemMarker) {
+									 
+									return function() {self.toggleGemMarker(gemMarker)};
+								}(thisGemMarker)
+							);
+						}
 						self.displayedGemMarkers.push(thisGemMarker);
 					}).fail(function(error) {
 
@@ -467,12 +559,20 @@ var ViewModel = function () {
 
 			if (displayedGem.neighborhood()[0][1] == neighborhoodKey[1]) {
 
-				displayedGemMarker.marker.setMap(map);
+				if (displayedGemMarker.marker) {
+
+					displayedGemMarker.marker.setMap(map);
+				}
+				
 				displayedGemMarker.isDisplayed(true);
 			}
 			else {
 
-				displayedGemMarker.marker.setMap(null);
+				if (displayedGemMarker.marker) {
+					
+					displayedGemMarker.marker.setMap(null);
+				}
+				
 				displayedGemMarker.isDisplayed(false);
 			}
 		}
@@ -482,9 +582,13 @@ var ViewModel = function () {
 
 		for (var i = 0; i < self.displayedGemMarkers().length; i++) {
 
-			self.displayedGemMarkers()[i].marker.setMap(null);
+			if (self.displayedGemMarkers()[i].marker) {
+				
+				self.displayedGemMarkers()[i].marker.setMap(null);
+				self.displayedGemMarkers()[i].marker = null;
+			}
+
 			self.displayedGemMarkers()[i].isDisplayed(false);
-			self.displayedGemMarkers()[i].marker = null;
 			self.displayedGemMarkers()[i].data = null;
 		}
 
@@ -552,6 +656,11 @@ var ViewModel = function () {
 
 	self.toggleGemMarker = function (gemMarker) {
 		// set selected gem and infowindo html, and toggle animation	
+		if (!gemMarker.marker) {
+
+			return;
+		}
+
 		var thisGem = self.loadedGems[gemMarker.gemKey];
 		self.selectedGem(thisGem);
 
@@ -575,8 +684,11 @@ var ViewModel = function () {
 
     	infoWindow.setContent(clone);
 
-		gemMarker.marker.setAnimation(google.maps.Animation.BOUNCE);
-		setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
+    	if (gemMarker.marker) {
+			
+			gemMarker.marker.setAnimation(google.maps.Animation.BOUNCE);
+			setTimeout(function(){ gemMarker.marker.setAnimation(null); }, 1500);
+		}
 	};
 
 	/* Third Party API Related
@@ -602,41 +714,28 @@ var ViewModel = function () {
     };
 
     self.setSeletedLocationInfo = function () {
+    	// do async calls or other view setting for selected location
 
     	// reset the info
     	self.selectedLocationWikiInfo([]);
     	self.selectedLocationNYTimesInfo([]);
 
-    	var location;
-    	var name;
-
+    	// customize third part API calls
     	if (typeof self.selectedNeighborhood() != 'undefined') {
 
-    		location = self.selectedNeighborhood().name();
-    		name = location + ", " + self.selectedCity().name() + ", " + self.selectedCountry().name();
-    		self.selectedLocationName(name);
+	    	self.setSelectedLocationWikiInfo(self.selectedNeighborhood().name());
+	    	self.setSelectedLocationNYTimesInfo(self.selectedNeighborhood().name());
     	}
     	else if (typeof self.selectedCity() != 'undefined') {
 
-    		location = self.selectedCity().name();
-    		name = location + ", " + self.selectedCountry().name();
-    		self.selectedLocationName(name);
+	    	self.setSelectedLocationWikiInfo(self.selectedCity().name() + ", " + self.selectedCountry().name());
+	    	self.setSelectedLocationNYTimesInfo(self.selectedCity().name() + ", " + self.selectedCountry().name());
     	}
     	else if (typeof self.selectedCountry() != 'undefined') {
 
-    		location = self.selectedCountry().name();
-    		self.selectedLocationName(location);
+	    	self.setSelectedLocationWikiInfo(self.selectedCountry().name());
+	    	self.setSelectedLocationNYTimesInfo(self.selectedCountry().name());
     	}
-    	else {
-
-    		self.selectedLocationName("[select location]");
-    		// don't search for no location
-    		return;
-    	}
-
-    	// set top 3 related wiki entries and top 5 related nytimes articles
-    	self.setSelectedLocationWikiInfo(location);
-    	self.setSelectedLocationNYTimesInfo(location);
     };
 
     self.setSelectedLocationWikiInfo = function(location) {
@@ -779,6 +878,13 @@ var ViewModel = function () {
 // embed the Google Map
 function initMap() {
 
+	// check if Google Map api called failed
+	if (typeof google != 'object' && typeof google.maps != 'object') {
+
+		window.alert("Google Map failed to load.");
+		return;
+	}
+
 	map = new google.maps.Map(document.getElementById('googlemap'), {
 	  	
 	  	center: {lat: 18.7869, lng: 98.9865}, // should be lat: 18.7061, lng: 98.9817 for production
@@ -800,6 +906,12 @@ function initMap() {
 
 function detectUserLocation () {
 	// Try HTML5 geolocation and render marker
+
+	if (typeof google != 'object' && typeof google.maps != 'object') {
+
+		window.alert("Google Map was not loaded correctly, so there's no location to show.");
+		return;		
+	}
 
     if (navigator.geolocation) {
 
@@ -836,6 +948,12 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
 
 function createAndRenderLocationMarker(yourLocation) {
 	// show location on map
+
+	if (typeof google != 'object' && typeof google.maps != 'object') {
+
+		window.alert("Google Map was not loaded correctly, so there's no location to show.");
+		return;
+	}
 
 	// if already showing, destroy old marker
 	if (yourLocationMarker != null) {
@@ -875,6 +993,12 @@ function createAndRenderLocationMarker(yourLocation) {
 
 // show directions from current location to selected marker
 function showDirections(destination, origin, travelMode) {
+
+	if (typeof google != 'object' && typeof google.maps != 'object') {
+
+		window.alert("Google Map was not loaded correctly, so there's no directions to show.");
+		return;
+	}
 
     var request = {
       	destination: destination,

@@ -4,14 +4,6 @@ body {
 	background-color: #3377ff;
 }
 
-a {
-
-}
-
-.link {
-
-}
-
 #headerdiv {
 	padding-left: 15px;
 	padding-right: 15px;
@@ -85,10 +77,6 @@ a {
 	cursor: pointer;
 }
 
-.locationselect {
-
-}
-
 #yourlocationdiv {
 	text-align: center;
 	margin-bottom: 10px;
@@ -117,32 +105,20 @@ a {
 }
 
 .geminfowindowdiv {
-
 	width: 300px;
 	overflow: scroll;
 }
 
 .geminfowindowdiv {
-
 	text-align: left;
 }
 
-.geminfowindowtextdiv {
-
-}
-
-.geminfowindowimgdiv {
-
-}
-
 .geminfowindowimg {
-
 	max-width: 150px;
 	max-height: 150px;
 }
 
 .geminfowindowheader {
-
 	font-weight: bold;
 }
 
@@ -294,10 +270,6 @@ a {
 
 #hidedirectionsbutton:hover {
 	cursor: pointer;
-}
-
-@media screen and (max-width: 499px) {
-
 }
 
 /* load location gif
@@ -707,6 +679,45 @@ a {
 		background-color:rgb(255,255,255);
 	}
 }
+
+/* media queries
+*/
+
+/* #### Mobile Phones Portrait #### */
+@media screen and (max-device-width: 480px) and (orientation: portrait){
+
+}
+
+/* #### Mobile Phones Landscape #### */
+@media screen and (max-device-width: 640px) and (orientation: landscape){
+
+}
+
+/* #### Mobile Phones Portrait or Landscape #### */
+@media screen and (max-device-width: 640px){
+
+}
+
+/* #### iPhone 4+ Portrait or Landscape #### */
+@media screen and (min-device-width: 320px) and (-webkit-min-device-pixel-ratio: 2){
+
+}
+
+/* #### iPhone 5 Portrait or Landscape #### */
+@media (device-height: 568px) and (device-width: 320px) and (-webkit-min-device-pixel-ratio: 2){
+
+}
+
+/* #### iPhone 6 and 6 plus Portrait or Landscape #### */
+@media (min-device-height: 667px) and (min-device-width: 375px) and (-webkit-min-device-pixel-ratio: 3){
+
+}
+
+/* #### Tablets Portrait or Landscape #### */
+@media screen and (min-device-width: 768px) and (max-device-width: 1024px){
+
+}
+
 
 /* overrides
 */

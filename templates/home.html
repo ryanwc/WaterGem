@@ -2,6 +2,7 @@
 
 {% block head %}
 
+	{{ super() }}
 	<meta name="google-site-verification" content="NTP3s5vk3p_XegMamJvIj1Bl0CGfOlZd0iZqr5_0wEE" />
 	<title>WaterGem - Find the Closest Cheap and Clean Drinking Water</title>
 	<link rel="stylesheet" href="stylesheets/home.css">
@@ -33,11 +34,37 @@
 	<!-- list view to meet udacity requirements -->
 	<div id="listviewdiv">
 		<div id="listviewheader">
-			List of Gems in Selected Location
+
+			<!-- ko if: selectedCity -->
+			List of all <span data-bind="text: selectedLocationNumDisplayedGems"></span> gems in <span data-bind="text: selectedLocationName"></span>
+				<!-- ko if: showingDirections -->
+				<span>(List filtered to show only selected gem with directions)</span>
+				<!-- /ko -->
+			<!-- /ko -->
+
+			<!-- ko ifnot: selectedCity -->
+				Make some selections to find gems
+			<!-- /ko -->
+
 		</div>
-		<div id="listviewlist" data-bind="foreach: displayedGemMarkers">
-			<!-- ko if: $data.isDisplayed -->
-			<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
+		<div id="listviewlist">
+			<!-- ko if: displayedGemMarkers().length < 1 -->
+			<div class="nonetodisplaymessage" id="narrowselectionmessage">
+				No gems to display yet; make some more selections.
+			</div>
+			<!-- /ko -->
+			<!-- ko if: selectedLocationNumDisplayedGems() > 0 -->
+				<!-- ko foreach: displayedGemMarkers -->
+					<!-- ko if: $data.isDisplayed -->
+						<!-- perhaps it would be a bit easier to understand if the boolean above was 'isFiltered' instead of 'isDiplayed' and the if statement was 'if: !$data.isFiltered' -->
+						<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
+					<!-- /ko -->
+				<!-- /ko -->
+			<!-- /ko -->
+			<!-- ko if: selectedLocationNumDisplayedGems == 0 -->
+				<div class="nonetodisplaymessage" id="nogemsmessage">
+					This location has no gems.
+				</div>			
 			<!-- /ko -->
 		</div>
 	</div>
