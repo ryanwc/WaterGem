@@ -14,7 +14,7 @@
 
 	<div class="outerdiv" id="headerdiv">
 		<h1 id="headerlogo">WaterGem</h1>
-		<p id="headerlogophrase">Find the nearest cheap and clean drinking water</p>
+		<p id="headerlogophrase">Easily find and refill your most precious scarce resource while saving money and the environment</p>
 	</div>
 
 	<!-- menu bar for user selections -->
@@ -37,15 +37,15 @@
 
 			<!-- ko if: selectedCity -->
 				<!-- ko if: selectedLocationNumDisplayedGems() < 1 -->
-				No gems found yet in <span data-bind="text: selectedLocationName"></span>
+				No gems have been found yet in <span data-bind="text: selectedLocationName"></span>
 				<!-- /ko -->
 
 				<!-- ko if: selectedLocationNumDisplayedGems() == 1 -->
-				List containing the single gem in <span data-bind="text: selectedLocationName"></span>
+				Just one gem has been found in <span data-bind="text: selectedLocationName"></span>
 				<!-- /ko -->
 
 				<!-- ko if: selectedLocationNumDisplayedGems() > 1 -->
-				List of all <span data-bind="text: selectedLocationNumDisplayedGems"></span> gems in <span data-bind="text: selectedLocationName"></span>
+				<span data-bind="text: selectedLocationNumDisplayedGems"></span> gems have been found in <span data-bind="text: selectedLocationName"></span>
 				<!-- /ko -->
 
 				<!-- ko if: showingDirections -->
@@ -63,7 +63,7 @@
 				<!-- ko foreach: displayedGemMarkers -->
 					<!-- ko if: $data.isDisplayed -->
 						<!-- perhaps it would be a bit easier to understand if the boolean above was 'isFiltered' instead of 'isDiplayed' and the if statement was 'if: !$data.isFiltered' -->
-						<div class="listviewitem" data-bind="click: $root.clickGemFromListView">Gem <span data-bind="text: $index"></span></div>
+						<div class="listviewitem" data-bind="click: $root.clickGemFromListView"><span data-bind="text: $root.getLoadedGemName($data.gemKey)"></span></div>
 					<!-- /ko -->
 				<!-- /ko -->
 			<!-- /ko -->

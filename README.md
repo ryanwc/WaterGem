@@ -6,7 +6,7 @@ Easily find and refill your most precious scarce resource while saving money and
 
 In Thailand, the tap water is unsafe for human consumption.  To survive, tourists buy expensive bottled water, hurting both their wallets and the environment.
 
-However, there is a better solution: Locals drink water from reverse osmosis water stations, which are both much cheaper and much better for than the environment than bottled water while offering the same water quality.
+However, there is a better solution: Locals drink water from reverse osmosis water stations, which are both much cheaper and much better for than the environment than bottled water while offering the same (or better) water quality.
 
 There are three reasons tourists do not use these water refill stations: 1) Tourists don't know about the stations, 2) the stations are hard to find, and 3) tourists are unsure of the water quality from these stations.
 

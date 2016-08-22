@@ -73,6 +73,7 @@ class Neighborhood(ndb.Model):
 class Gem(ndb.Model):
 	''' Datastore model for one gem
 	'''
+	name = ndb.StringProperty(required = True)
 	location = ndb.GeoPtProperty(required = True)
 	neighborhood = ndb.KeyProperty(required = True)
 	prices = ndb.FloatProperty(repeated = True)
@@ -94,6 +95,7 @@ LOCALES = {
 			 "Nong Chok":[],
 			 "Bang Rak":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"13.730723, 100.51499", 
 					"picname":"",
 					"prices":[],
@@ -108,6 +110,7 @@ LOCALES = {
 			 "Bang Kapi":[],
 			 "Pathum Wan":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"13.736146, 100.52327", 
 					"picname":"Bangkok10",
 					"prices":[1],
@@ -126,6 +129,7 @@ LOCALES = {
 			 "Samphanthawong":[],
 			 "Phaya Thai":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"13.77911, 100.53787", 
 					"picname":"Bangkok7",
 					"prices":[1],
@@ -136,6 +140,7 @@ LOCALES = {
 					"notes":""
 			 	},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.795133, 100.5498", 
 					"picname":"Bangkok9",
 					"prices":[.75],
@@ -161,6 +166,7 @@ LOCALES = {
 			 "Bueng Kum":[],
 			 "Sathon":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"13.718142, 100.52685",
 					"picname":"Bangkok17",
 					"prices":[],
@@ -181,6 +187,7 @@ LOCALES = {
 			 "Don Mueang":[],
 			 "Ratchathewi":[
 			 	{
+			 		"name":"Generic Gem",
 			 		"location":"13.753356, 100.54607",
 			 		"picname":"Bangkok1",
 			 		"prices":[1,2,5,10],
@@ -191,6 +198,7 @@ LOCALES = {
 			 		"notes":""
 			 	},
 			 	{		
+			 		"name":"Generic Gem",
 			 		"location":"13.7554083, 100.5420694", 
 					"picname":"Bangkok2",
 					"prices":[1,5,10],
@@ -201,6 +209,7 @@ LOCALES = {
 					"notes":"Side street called Thanon C.S.T. off of Ratchaprarop Road next to Ratchaprarop Kitchen."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.757015, 100.54206", 
 					"picname":"Bangkok3",
 					"prices":[],
@@ -211,6 +220,7 @@ LOCALES = {
 					"notes":"Side alley off of Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.757594, 100.54218", 
 					"picname":"Bangkok4",
 					"prices":[1],
@@ -221,6 +231,7 @@ LOCALES = {
 					"notes":"Side alley off of Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.758816, 100.54254", 
 					"picname":"Bangkok5",
 					"prices":[1,5,10],
@@ -231,6 +242,7 @@ LOCALES = {
 					"notes":"Side street at intersection of Ratchaprarop Road and Rang Nam Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.762113, 100.54044", 
 					"picname":"Bangkok6",
 					"prices":[1,2,5,10],
@@ -241,6 +253,7 @@ LOCALES = {
 					"notes":"Left side of driveway of Sabaai Place condos/apartments."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.760931, 100.54316", 
 					"picname":"Bangkok8",
 					"prices":[],
@@ -251,6 +264,7 @@ LOCALES = {
 					"notes":"North/south side street reachable from Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.760336, 100.54323", 
 					"picname":"",
 					"prices":[],
@@ -261,6 +275,7 @@ LOCALES = {
 					"notes":"North/south side street reachable from Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.759964, 100.54326", 
 					"picname":"",
 					"prices":[.75],
@@ -271,6 +286,7 @@ LOCALES = {
 					"notes":"North/south side street reachable from Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.759585, 100.54315", 
 					"picname":"",
 					"prices":[],
@@ -281,6 +297,7 @@ LOCALES = {
 					"notes":"North/south side street reachable from Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.75923, 100.54318", 
 					"picname":"",
 					"prices":[],
@@ -291,6 +308,7 @@ LOCALES = {
 					"notes":"North/south side street reachable from Ratchaprarop Road."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.753386, 100.544264", 
 					"picname":"Bangkok13",
 					"prices":[1],
@@ -301,6 +319,7 @@ LOCALES = {
 					"notes":"Next to Home Hug Hostel; across from 7/11."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.753019, 100.54371", 
 					"picname":"Bangkok14",
 					"prices":[1],
@@ -311,6 +330,7 @@ LOCALES = {
 					"notes":"This picture might need to be switched with the picture for the gem a few steps to the south."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.752996, 100.5457", 
 					"picname":"Bangkok15",
 					"prices":[1],
@@ -321,6 +341,7 @@ LOCALES = {
 					"notes":"Hidden just inside the wall separating a parking lot from the street."
 				},
 				{
+				 	"name":"Generic Gem",
 					"location":"13.752804, 100.54365", 
 					"picname":"Bangkok16",
 					"prices":[1],
@@ -334,6 +355,7 @@ LOCALES = {
 			 "Lat Phrao":[],
 			 "Watthana":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"13.743452, 100.58091", 
 					"picname":"Bangkok11",
 					"prices":[1],
@@ -344,6 +366,7 @@ LOCALES = {
 					"notes":"On north/south street connecting to Baandon Mosque ferry canal stop."
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"13.743452, 100.58091", 
 					"picname":"Bangkok12",
 					"prices":[1],
@@ -369,6 +392,7 @@ LOCALES = {
 		 "Chiang Mai":
 			{"Si Phum":[
 				{ 
+			 		"name":"Generic Gem",
 					"location":"18.79691, 98.983932", 
 					"picname":"ChiangMai3",
 					"prices":[1,2,5,10],
@@ -379,6 +403,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"18.796073, 98.985908", 
 					"picname":"ChiangMai4",
 					"prices":[],
@@ -389,6 +414,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"country":"Thailand", 
 					"city":"Chiang Mai", 
 					"neighborhood":"Si Phum", 
@@ -402,6 +428,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"country":"Thailand", 
 					"city":"Chiang Mai", 
 					"neighborhood":"Si Phum", 
@@ -415,6 +442,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"country":"Thailand", 
 					"city":"Chiang Mai", 
 					"neighborhood":"Si Phum", 
@@ -428,6 +456,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"country":"Thailand", 
 					"city":"Chiang Mai", 
 					"neighborhood":"Si Phum", 
@@ -441,6 +470,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"country":"Thailand", 
 					"city":"Chiang Mai", 
 					"neighborhood":"Si Phum", 
@@ -456,6 +486,7 @@ LOCALES = {
 			 ],
 			 "Phra Sing":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"18.784742, 98.988516", 
 					"picname":"ChiangMai8",
 					"prices":[1],
@@ -468,6 +499,7 @@ LOCALES = {
 			 ],
 			 "Haiya":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"18.778776, 98.984087", 
 					"picname":"ChiangMai7",
 					"prices":[1,2,5,10],
@@ -480,6 +512,7 @@ LOCALES = {
 			 ],
 			 "Chang Moi":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"18.786477, 99.001771", 
 					"picname":"ChiangMai14",
 					"prices":[1,2,5,10],
@@ -494,6 +527,7 @@ LOCALES = {
 			 "Wat Ket":[],
 			 "Chang Phueak":[
 			 	{ 
+			 		"name":"Generic Gem",
 					"location":"18.798959, 98.975058", 
 					"picname":"ChiangMai15",
 					"prices":[1],
@@ -506,6 +540,7 @@ LOCALES = {
 			 ],
 			 "Suthep":[
 			 	{
+			 		"name":"Generic Gem",
 					"location":"18.801171, 98.963313", 
 					"picname":"ChiangMai1",
 					"prices":[1],
@@ -516,6 +551,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+				 	"name":"Generic Gem",
 					"location":"18.800649, 98.961743", 
 					"picname":"ChiangMai2",
 					"prices":[.50],
@@ -526,6 +562,7 @@ LOCALES = {
 					"notes":""
 				},
 				{ 
+			 		"name":"Generic Gem",
 					"location":"18.802812, 98.963543", 
 					"picname":"ChiangMai5",
 					"prices":[.50],
@@ -536,6 +573,7 @@ LOCALES = {
 					"notes":""
 				},
 				{
+			 		"name":"Generic Gem",
 					"location":"18.802584, 98.963213", 
 					"picname":"ChiangMai6",
 					"prices":[.50],
@@ -777,7 +815,8 @@ class Home(Handler):
 								thisImgPath = imgPath + gem["picname"] + ".jpg"
 								picture = open(thisImgPath, "rb").read()
 
-							newGem = Gem(location=ndb.GeoPt(gem["location"]), 
+							newGem = Gem(name=gem["name"],
+								location=ndb.GeoPt(gem["location"]), 
 								neighborhood=neighborhoodObj.key,
 								prices=gem["prices"], uv=gem["uv"],
 								ozone=gem["ozone"], confirmed=gem["confirmed"],
@@ -1242,6 +1281,25 @@ class GetInstanceByKey(Handler):
 		else:
 			self.response.write(None)
 
+class SetGemName(Handler):
+	'''Handle requests to set gem name
+	'''
+	def get(self):
+
+		gemKeyArray = self.request.headers["key"].split(",")
+		newName = self.request.headers["newName"]
+
+		gemKey = ndb.Key(gemKeyArray[0], int(gemKeyArray[1]))
+
+		gem = gemKey.get()
+
+		if gem:
+
+			gem.name = newName
+			gem.put()
+			return self.response.write(json.dumps("sucess!"))
+		else:
+			return self.response.write(json.dumps("gem was not found"))
 
 app = webapp2.WSGIApplication(
 		[webapp2.Route("/", handler=Home, name="index"),
@@ -1257,7 +1315,8 @@ app = webapp2.WSGIApplication(
 		 webapp2.Route("/GetGems", handler=GetGems, name="getgems"),
 		 webapp2.Route("/GetLocales", handler=GetLocales, name="getlocales"),
 		 webapp2.Route("/GetByKey", handler=GetInstanceByKey, 
-		 	name="getinstancebykey")],
+		 	name="getinstancebykey"),
+		 webapp2.Route("/SetGemName", handler=SetGemName, name="setgemname")],
 		debug=True)
 
 

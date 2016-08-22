@@ -28,6 +28,7 @@ var map;
 var infoWindow;
 var directionsService;
 var directionsDisplay;
+var geocoder;
 var yourLocationMarker;
 var viewModel;
 
@@ -82,7 +83,8 @@ var Gem = function (data) {
 	var self = this;
 
 	// data from server
-	self.name = ko.observable("Gem (water refill)");
+	self.name = ko.observable(data["name"]);
+	
 	self.key = ko.observable(data["key"]);
 	self.location = ko.observable(data["location"]);
 	self.neighborhood = ko.observable(data["neighborhood"]);
@@ -254,6 +256,11 @@ var ViewModel = function () {
 	/* helpers
 	*/
 
+	self.getLoadedGemName = function (gemKey) {
+
+		return self.loadedGems[gemKey].name();
+	}
+
 	self.toggleShowingDirections = function() {
 
 		self.showingDirections(!self.showingDirections());
@@ -280,7 +287,6 @@ var ViewModel = function () {
 
 	self.googleMapIsLoaded.subscribe(function(newSelection) {
 
-		console.log("google map status changed");
 		console.log((typeof google === 'object' && typeof google.maps === 'object'));
 
 		if (newSelection) {
@@ -317,6 +323,7 @@ var ViewModel = function () {
 
 					self.displayedGemMarkers()[i].marker.setMap(map);
 					self.displayedGemMarkers()[i].isDisplayed(true);
+					console.log(thisGem.name());
 				}
 			}
 			
@@ -537,6 +544,9 @@ var ViewModel = function () {
 						dataJSON["neighborhoodName"] = self.loadedNeighborhoods[neighborhoodKey].name();
 						// add gem to loaded gems, then to displayed gems
 						var newGem = new Gem(dataJSON);
+
+						setTimeout(function(){self.setGemNameOnServer(newGem);}, 2000);
+
 						self.loadedGems[newGem["key"]()] = newGem;
 						var thisGemMarker = new GemMarker(newGem);
 
@@ -581,6 +591,7 @@ var ViewModel = function () {
 				}
 				
 				displayedGemMarker.isDisplayed(true);
+				console.log(displayedGem.name());
 			}
 			else {
 
@@ -709,6 +720,77 @@ var ViewModel = function () {
 
 	/* Third Party API Related
 	*/
+
+	// utility only for completely new gems
+	// gets nearest, most specific place name from reverse geocode call and sets on server
+	self.setGemNameOnServer = function (gem) {
+
+		if (gem.name() == "Generic Gem") {
+
+			console.log(gem.location() + " had generic name, so getting name from reverse geocoding");
+			var latlngStr = gem.location().split(',');
+			var latlng = {lat: parseFloat(latlngStr[0]), lng: parseFloat(latlngStr[1])};
+
+			geocoder.geocode({'location': latlng}, function(results, status) {
+
+				if (status === 'OK') {
+					
+					if (results[0] && results[0]["address_components"][0]) {
+
+						console.log(results[0]);
+
+						var number;
+						var lessSpecific;
+						var newName = "Gem near ";
+
+						console.log("types are " + results[0]["address_components"][0]["types"]);
+						// assumes if there is a number, there is also at least one less specific
+						if (results[0]["address_components"][0]["types"].includes("street_number")) {
+
+							console.log("has street number");
+							number = results[0]["address_components"][0]["long_name"];
+							lessSpecific = results[0]["address_components"][1]["long_name"];
+							newName += number + " " + lessSpecific;
+						}
+						else {
+
+							newName += results[0]["address_components"][0]["long_name"];
+						}
+
+						// set the name for this client instance
+						console.log(gem.location() + " ended up as " + newName);
+
+						gem.name(newName);
+						console.log(gem.name())
+
+						// set on server for good
+						(function(thisGemKey) {
+
+							$.ajax({
+								type: "GET",
+								url: "/SetGemName",
+								headers: {"key":thisGemKey, "newName": newName}
+							}).done(function(response) {
+
+								console.log(response);
+							}).fail(function(error) {
+
+								window.alert("Failed to put new name in server");
+							});
+						})(gem.key());					
+					} 
+					else {
+			    
+			    		window.alert('No results found for reverse geolocation');
+			 		}
+				}
+				else {
+				  
+				  window.alert('Geocoder failed due to: ' + status);
+				}
+			});
+		}
+	};
 
 	self.ensureGemMarkersHaveMarker = function() {
 		// useful if async google map api load finished after GemMarkers are created
@@ -928,8 +1010,6 @@ var ViewModel = function () {
 function initMap() {
 
 	// check if Google Map api called failed
-	console.log(typeof google);
-	console.log(typeof google.maps);
 	if (typeof google != 'object' && typeof google.maps != 'object') {
 
 		window.alert("Google Map failed to load.");
@@ -945,6 +1025,7 @@ function initMap() {
 
     directionsService = new google.maps.DirectionsService;
     directionsDisplay = new google.maps.DirectionsRenderer;
+    geocoder = new google.maps.Geocoder;
 	infoWindow = new google.maps.InfoWindow({map: null});
 
 	//uncomment next line for production (this is commented to meet udacity requirements)
