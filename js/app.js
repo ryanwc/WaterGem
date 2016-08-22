@@ -409,7 +409,6 @@ var ViewModel = function () {
 
     	if (newSelection) {
 
-    		console.log(newSelection);
     		if (newSelection.name() == "Chiang Mai") {
 
     			map.setCenter(chiangMaiLatLon);
